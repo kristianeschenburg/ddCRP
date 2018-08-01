@@ -17,7 +17,7 @@ In contrast to work presented by Baldassano et al. 2015 and Moyer et al. 2017, w
 
 Example of use on synthetic data:
 
-.. code-block:: language
+.. code-block:: python
 	from ddcrp import ddCRP
 	import synthetic
 
