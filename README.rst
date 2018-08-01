@@ -40,7 +40,6 @@ Example of use on synthetic data::
 	crp = ddCRP(alpha, mu, kappa, nu, sigma, mcmc_passes=30, stats_interval=200)
 	crp.fit(features, Synth.adj_list, init_c=None)
 
-
 .. image:: ddCRP/figures/ell.jpg
 
 For more information on the Chinese Restaurant Process, see:
