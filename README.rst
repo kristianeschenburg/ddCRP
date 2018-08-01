@@ -8,16 +8,12 @@ ddCRP
 .. image:: https://img.shields.io/pypi/v/ddCRP.svg
         :target: https://pypi.python.org/pypi/ddCRP
 
-
-Package for modeling multivariate, graph-based data via the distance-dependent Chinese Restaurant Process.
-
 This is a package to apply the distance-dependent Chinese Restaurant Process (dd-CRP) to multi-dimensional graph-based data.  It is based roughly on code originally written by Christopher Baldassano (*Baldassano et al. (2015), Parcellating Connectivity In Spatial Maps. PeerJ 3:e784; DOI 10.7717/peerj.784*).
 
 In contrast to work presented by Baldassano et al. 2015 and Moyer et al. 2017, whose methods both model the univariate similarities within and between clusters, this method models the clusters themselves, placing priors on the connectivity features of each cluster.
 
-Example of use on synthetic data:
+Example of use on synthetic data::
 
-.. code-block:: python
 	from ddcrp import ddCRP
 	import synthetic
 
