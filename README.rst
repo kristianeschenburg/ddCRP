@@ -1,5 +1,5 @@
 ===============================
-ChineseRestaurantProcess
+ddCRP
 ===============================
 
 .. image:: https://img.shields.io/travis/kristianeschenburg/ddCRP.svg
@@ -17,34 +17,33 @@ In contrast to work presented by Baldassano et al. 2015 and Moyer et al. 2017, w
 
 Example of use on synthetic data:
 
-```python
-from ddcrp import ddCRP
-import synthetic
+.. code-block:: language
+	from ddcrp import ddCRP
+	import synthetic
 
-# set hyperparameter values
-alpha = 10
-mu = 0
-kappa = 0.0001
-nu = 1
-sigma = 1
+	# set hyperparameter values
+	alpha = 10
+	mu = 0
+	kappa = 0.0001
+	nu = 1
+	sigma = 1
 
-# dimensionality of data
-d = 5
+	# dimensionality of data
+	d = 5
 
-# generate synthetic label map
-Synth = synthetic.GenerateSynthData(type='ell',sig=0.1)
+	# generate synthetic label map
+	Synth = synthetic.GenerateSynthData(type='ell',sig=0.1)
 
-# sample synthetic features for each label
-# If you want to sample from a different Normal-Inverse-Chi-Squared
-# distribution, change kappa, mu, nu, and sigma
-[_,_,_,features] = synthetic.GenerateSynthFeatures(Synth.z,d,mu,kappa,nu,sigma)
+	# sample synthetic features for each label
+	# If you want to sample from a different Normal-Inverse-Chi-Squared
+	# distribution, change kappa, mu, nu, and sigma
+	[_,_,_,features] = synthetic.GenerateSynthFeatures(Synth.z,d,mu,kappa,nu,sigma)
 
-# fit the ddcrp model
-# after fitting, crp.map_z is the MAP label
-crp = ddCRP(alpha,mu,kappa,nu,sigma,mcmc_passes=30,stats_interval=200)
-crp.fit(features,Synth.adj_list,init_c=None)
+	# fit the ddcrp model
+	# after fitting, crp.map_z is the MAP label
+	crp = ddCRP(alpha,mu,kappa,nu,sigma,mcmc_passes=30,stats_interval=200)
+	crp.fit(features,Synth.adj_list,init_c=None)
 
-```
 
 !['Model performance on 'ell' synthetic datasetg.'](https://github.com/kristianeschenburg/ddCRP/ddCRP/figures/ell.jpg)
 
