@@ -14,7 +14,7 @@ In contrast to work presented by Baldassano et al. 2015 and Moyer et al. 2017, w
 
 Example of use on synthetic data::
 
-	from ddcrp import ddCRP
+	from ddCRP import ddCRP
 	import synthetic
 
 	# set hyperparameter values
@@ -28,20 +28,20 @@ Example of use on synthetic data::
 	d = 5
 
 	# generate synthetic label map
-	Synth = synthetic.GenerateSynthData(type='ell',sig=0.1)
+	Synth = synthetic.GenerateSynthData(type='ell', sig=0.1)
 
 	# sample synthetic features for each label
 	# If you want to sample from a different Normal-Inverse-Chi-Squared
 	# distribution, change kappa, mu, nu, and sigma
-	[_,_,_,features] = synthetic.GenerateSynthFeatures(Synth.z,d,mu,kappa,nu,sigma)
+	[_,_,_,features] = synthetic.GenerateSynthFeatures(Synth.z, d, mu, kappa, nu, sigma)
 
 	# fit the ddcrp model
 	# after fitting, crp.map_z is the MAP label
-	crp = ddCRP(alpha,mu,kappa,nu,sigma,mcmc_passes=30,stats_interval=200)
-	crp.fit(features,Synth.adj_list,init_c=None)
+	crp = ddCRP(alpha, mu, kappa, nu, sigma, mcmc_passes=30, stats_interval=200)
+	crp.fit(features, Synth.adj_list, init_c=None)
 
 
-!['Model performance on 'ell' synthetic datasetg.'](https://github.com/kristianeschenburg/ddCRP/ddCRP/figures/ell.jpg)
+.. image:: https://github.com/kristianeschenburg/ddCRP/ddCRP/figures/ell.jpg
 
 For more information on the Chinese Restaurant Process, see:
 
