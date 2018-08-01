@@ -1,8 +1,8 @@
 import numpy as np
 import time
 
-def UpdateStats(stats, t0, curr_lp, max_lp, K, z, c, steps, gt_z, map_z, verbose):
 
+def UpdateStats(stats, t0, curr_lp, max_lp, K, z, c, steps, gt_z, map_z, verbose):
 	"""
 	Update diagnostic statistics.
 
@@ -20,12 +20,11 @@ def UpdateStats(stats, t0, curr_lp, max_lp, K, z, c, steps, gt_z, map_z, verbose
 		verbose : flag to print status updates
 	"""
 
-    
 	stats['lp'].append(curr_lp)
 	stats['max_lp'].append(max_lp)
 	stats['K'].append(K)
-	stats['z'] = np.row_stack([stats['z'],z])
-	stats['c'] = np.row_stack([stats['c'],c])
+	stats['z'] = np.row_stack([stats['z'], z])
+	stats['c'] = np.row_stack([stats['c'], c])
 	curr_time = time.clock() - t0
 	stats['times'].append(curr_time)
 	if verbose:
@@ -37,8 +36,8 @@ def UpdateStats(stats, t0, curr_lp, max_lp, K, z, c, steps, gt_z, map_z, verbose
 
 	return stats
 
-def NMI(z1, z2):
 
+def NMI(z1, z2):
 	"""
 	Compute normalized mutual information between two maps.two
 
@@ -58,8 +57,9 @@ def NMI(z1, z2):
 	p2[p2 == 0] = 1
 	H2 = (-p2*np.log(p2)).sum()
 
-	joint = np.histogram2d(z1,z2,[range(0,z1.max()+2), range(0,z2.max()+2)],
-																	normed=True)
+	joint = np.histogram2d(z1, z2,[range(0,z1.max()+2),
+							range(0,z2.max()+2)],
+							normed=True)
 	joint_p = joint[0]
 	pdiv = joint_p/np.outer(p1,p2)
 	pdiv[joint_p == 0] = 1

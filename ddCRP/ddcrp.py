@@ -10,10 +10,9 @@ import time
 
 
 class ddCRP(object):
-    
     """
     Class to implement the distance-dependent Chinese Restaurant Process.
-    
+
     Parameters:
     - - - - -
         alpha : concentration parameter of CRP prior
@@ -23,16 +22,14 @@ class ddCRP(object):
         mcmc_passes : number of MCMC passes to apply to data
         stats_interval : number of passes to run before recording statistics
         verbose : boolean to print statistics every stats_interval
-        
     """
-    
-    def __init__(self,alpha,mu_0,kappa_0,nu_0,sigma_0,mcmc_passes=100,
-        stats_interval=500,verbose=True):
-        
+
+    def __init__(self, alpha, mu_0, kappa_0, nu_0, sigma_0,
+                    mcmc_passes=100, stats_interval=500,verbose=True):
         """
         Initialize ddCRP object.
         """
-        
+
         self.alpha = np.float(alpha)
         self.mu0 = np.float(mu_0)
         self.kappa0 = np.float(kappa_0)
@@ -42,8 +39,9 @@ class ddCRP(object):
         self.stats_interval = np.int(stats_interval)
         self.verbose = verbose
 
-    def fit(self,features,adj_list,init_c=None,gt_z=None,edge_prior=None):
 
+    def fit(self, features, adj_list, init_c=None, gt_z=None,
+                edge_prior=None):
         """
         Main function to fit the distance-dependent Chinese Restaurant Process.Restaurant
 
@@ -55,7 +53,6 @@ class ddCRP(object):
             gt_z : ground truth map for computing normalized mutual information
             edge_prior : nested dictionary, probability of neighboring vertices beloning
                         to same parcels
-
         """
 
         # initialize Gibbs sampling object
@@ -71,22 +68,24 @@ class ddCRP(object):
             c = np.zeros((nvox,))
             for i in np.arange(nvox):
                 neighbors = adj_list[i] + [i]
-                c[i] = neighbors[np.random.randint(low=0,high=len(neighbors))]
+                c[i] = neighbors[np.random.randint(low=0,
+                                                high=len(neighbors))]
         else:
             c = init_c
 
         c = c.astype(np.int32)
 
         # initialize sparse linkage matrix
-        G = sparse.csc_matrix((np.ones((nvox,)),(np.arange(nvox),c)), shape=(nvox,nvox))
+        G = sparse.csc_matrix((np.ones((nvox,)),(np.arange(nvox),c)),
+                                shape=(nvox,nvox))
         G = G.tolil()
-        
+
         # compute initial parcel count and parcel assignments
         [K, z, parcels] = ConnectedComponents(G)
         self.init_z = z
 
         # compute log-likelihood of initial cortical map
-        curr_lp = self._fullProbabilityDDCRP(parcels,features)
+        curr_lp = self._fullProbabilityDDCRP(parcels, features)
 
         max_lp = -1.*np.inf
         map_z = []
@@ -146,7 +145,8 @@ class ddCRP(object):
 
                     # (possibly) new merge
                     elif z_rem[n] != z_rem[i]:
-                        lp[j] = self._LogProbDiff(parcels_rem,z_rem[i],z_rem[n],features)
+                        lp[j] = self._LogProbDiff(parcels_rem, z_rem[i], 
+                                                    z_rem[n],features)
 
                 # sample new neighbor according to Gibbs
                 new_neighbor = gibbs.fit(lp)
@@ -169,11 +169,11 @@ class ddCRP(object):
         self.map_z = map_z
         self.stats = stats
 
-    def _fullProbabilityDDCRP(self,parcels,features):
-        
+
+    def _fullProbabilityDDCRP(self, parcels, features):
         """
         Compute the full log-likelihood of the clustering.
-        
+
         Parameters:
         - - - - -
             parcels : dictionary mapping cluster IDs to data indices
@@ -184,17 +184,17 @@ class ddCRP(object):
         """
         
         lp = 0
-        
+
         for parc,idx in parcels.items():
-            
+
             sufficient = self._sufficient_statistics(features[idx,:])
             params_n = self._marginal_parameters(sufficient)
-            lp += self._LikelihoodCluster(params_n,sufficient[0])
+            lp += self._LikelihoodCluster(params_n, sufficient[0])
 
         return lp
     
-    def _LikelihoodCluster(self,params,n):
-        
+
+    def _LikelihoodCluster(self, params, n):
         """
         Computes the log marginal likelihood of a single cluster using the
         a Normal likelihood and Normal-Inverse-Chi-Squared prior.
@@ -219,16 +219,16 @@ class ddCRP(object):
         # terms with square roots in likelihood function
         inner = (1./2) * (np.log(self.kappa0) + self.nu0*np.log(self.nu0*self.sigma0) - 
                          np.log(kappa) - nu*np.log(nu) - n*np.log(np.pi))
-        
+
         # sum of sigma_n for each feature
         outer = (-nu/2.)*np.log(sigma).sum()
-        
+
         lp = p*(gam + inner) + outer
-        
+
         return lp
 
-    def _LogProbDiff(self,parcel_split,split_l1,split_l2,features):
 
+    def _LogProbDiff(self, parcel_split, split_l1, split_l2, features):
         """
         Compute change in log-likelihood when considering a merge.
 
@@ -251,17 +251,17 @@ class ddCRP(object):
         phyp = self._marginal_parameters(stats)
 
         # compute likelihood of merged parcels
-        merge_ll = self._LikelihoodCluster(phyp,stats[0])
+        merge_ll = self._LikelihoodCluster(phyp, stats[0])
 
         # compute likelihood of split parcels
-        split_ll = self._LogProbSplit(parcel_split,split_l1,split_l2,features)
+        split_ll = self._LogProbSplit(parcel_split, split_l1, split_l2, features)
 
         ld = merge_ll - split_ll
 
         return ld
 
-    def _LogProbSplit(self,parcel_split,split_l1,split_l2,features):
 
+    def _LogProbSplit(self, parcel_split, split_l1, split_l2, features):
         """
         Compute change in log-likelihood when consiering a split.
 
@@ -291,11 +291,11 @@ class ddCRP(object):
 
         return split_ll
  
-    def _sufficient_statistics(self,cluster_features):
-        
+
+    def _sufficient_statistics(self, cluster_features):
         """
         Compute sufficient statistics for data.
-        
+
         Parameters:
         - - - - -
             cluster_features : data array for single cluster 
@@ -305,7 +305,7 @@ class ddCRP(object):
             mu : mean of each feature
             ssq : sum of squares of each feature
         """
-        
+
         # n samples
         [n,_] = cluster_features.shape
         # feature means
@@ -313,14 +313,14 @@ class ddCRP(object):
         # feature sum of squares
         ssq = ((cluster_features-mu[None,:])**2).sum(0)
 
-        return [float(n),mu,ssq]
-    
-    def _marginal_parameters(self,suff_stats):
-        
+        return [float(n), mu, ssq]
+
+
+    def _marginal_parameters(self, suff_stats):
         """
         Computes cluster-specific marginal likelihood hyperparameters
         of a Normal / Normal-Inverse-Chi-Squared model.
-        
+
         Parameters:
         - - - - -
             suff_stats : sufficient statistics for single cluster
@@ -337,9 +337,10 @@ class ddCRP(object):
         # update kappa and nu
         kappaN = self.kappa0 + n
         nuN = self.nu0 + n
-        
+
         deviation = ((n*self.kappa0) / (n+self.kappa0)) * ((self.mu0 - mu)**2)
         sigmaN = (1./nuN) * (self.nu0*self.sigma0 + ssq + deviation)
-        
+
         return [kappaN,nuN,sigmaN]
+
     

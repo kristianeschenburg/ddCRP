@@ -1,8 +1,8 @@
 import numpy as np
 import random
 
-class Gibbs(object):
 
+class Gibbs(object):
 	"""
 	Simple class to perform Gibbs sampling.
 	"""
@@ -11,8 +11,8 @@ class Gibbs(object):
 
 		pass
 
-	def fit(self,lp):
 
+	def fit(self, lp):
 		max_lp = lp.max()
 		normLogP = lp - (max_lp + np.log(np.exp(lp-max_lp).sum()))
 		p = np.exp(normLogP)
