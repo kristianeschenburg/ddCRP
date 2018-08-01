@@ -76,8 +76,8 @@ class ddCRP(object):
         c = c.astype(np.int32)
 
         # initialize sparse linkage matrix
-        G = sparse.csc_matrix((np.ones((nvox,)),(np.arange(nvox),c)),
-                                shape=(nvox,nvox))
+        G = sparse.csc_matrix((np.ones((nvox, )),(np.arange(nvox), c)),
+                                shape=(nvox, nvox))
         G = G.tolil()
 
         # compute initial parcel count and parcel assignments
@@ -166,8 +166,8 @@ class ddCRP(object):
         # for visualization purposes
         map_z[np.where(map_z == 0)[0]] = map_z.max() + 1
 
-        self.map_z = map_z
-        self.stats = stats
+        self.map_z_ = map_z
+        self.stats_ = stats
 
 
     def _fullProbabilityDDCRP(self, parcels, features):
@@ -182,29 +182,36 @@ class ddCRP(object):
         - - - -
             lp : marginal log-likelihood of a whole parcelation
         """
-        
-        lp = 0
 
-        for parc,idx in parcels.items():
+        features = [features[idx,:] for idx in parcels.values()]
 
-            sufficient = self._sufficient_statistics(features[idx,:])
-            params_n = self._marginal_parameters(sufficient)
-            lp += self._LikelihoodCluster(params_n, sufficient[0])
+        # compute sufficient statistics of each parcel,
+        # stored in a list of lists
+        sufficient = map(self._sufficient_statistics,features)
+
+        # compute marginal parameters of each parcel,
+        # stored in list of lists
+        marginals = map(self._marginal_parameters,sufficient)
+
+        # compute log-likelihood of each parcel,
+        # store in list
+        cluster_probs = map(self._LikelihoodCluster,marginals,sufficient)
+
+        # compute full-parcellation log-likelhood
+        lp = np.sum(cluster_probs)
 
         return lp
     
 
-    def _LikelihoodCluster(self, params, n):
+    def _LikelihoodCluster(self, params, sufficient):
         """
         Computes the log marginal likelihood of a single cluster using the
         a Normal likelihood and Normal-Inverse-Chi-Squared prior.
         
         Parameters:
         - - - - -
-            kappa : kappa of cluster, marginalized of mu0,sigma0
-            nu : nu of cluster, marginalized of mu0,sigma0
-            sigma : sigma of cluster, marginalized of mu0,sigma0
-            n : sample size of cluster
+            params : marginal hyperparameters of cluster
+            sufficient : sufficient statistics of cluster
         Returns:
         - - - -
             lp : marginal log-likelhood of a single cluster
@@ -212,6 +219,7 @@ class ddCRP(object):
 
         kappa,nu,sigma = params[0:3]
         p = len(sigma)
+        n = sufficient[0]
 
         # ratio of gamma functions
         gam = gammaln(nu/2) - gammaln(self.nu0/2)
@@ -251,7 +259,7 @@ class ddCRP(object):
         phyp = self._marginal_parameters(stats)
 
         # compute likelihood of merged parcels
-        merge_ll = self._LikelihoodCluster(phyp, stats[0])
+        merge_ll = self._LikelihoodCluster(phyp, stats)
 
         # compute likelihood of split parcels
         split_ll = self._LogProbSplit(parcel_split, split_l1, split_l2, features)
@@ -284,8 +292,8 @@ class ddCRP(object):
         phyp1 = self._marginal_parameters(suff1)
         phyp2 = self._marginal_parameters(suff2)
 
-        lp_1 = self._LikelihoodCluster(phyp1,suff1[0])
-        lp_2 = self._LikelihoodCluster(phyp2,suff2[0])
+        lp_1 = self._LikelihoodCluster(phyp1,suff1)
+        lp_2 = self._LikelihoodCluster(phyp2,suff2)
 
         split_ll = lp_1 + lp_2
 
