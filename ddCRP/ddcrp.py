@@ -2,8 +2,8 @@ import numpy as np
 from scipy import sparse
 from scipy.special import gammaln
 
-from sampling import Gibbs
-from subgraphs import ConnectedComponents, ClusterSpanningTrees
+from .sampling import Gibbs
+from .subgraphs import ConnectedComponents, ClusterSpanningTrees
 import statistics
 
 import time
