@@ -2,9 +2,10 @@ import numpy as np
 from scipy import sparse
 from scipy.special import gammaln
 
-from .sampling import Gibbs
-from .subgraphs import ConnectedComponents, ClusterSpanningTrees
-import statistics
+from ddCRP import sampling
+from ddCRP import subgraphs
+from ddCRP import statistics
+from ddCRP import ward_clustering
 
 import time
 
@@ -15,17 +16,18 @@ class ddCRP(object):
 
     Parameters:
     - - - - -
-        alpha : concentration parameter of CRP prior
-        mu_0, kappa_0 : hyperparameters on feature mean prior
-        nu_0, sigma_0 : hyperparameters on feature variance prior
+    alpha : concentration parameter of CRP prior
+    mu_0, kappa_0 : hyperparameters on feature mean prior
+    nu_0, sigma_0 : hyperparameters on feature variance prior
 
-        mcmc_passes : number of MCMC passes to apply to data
-        stats_interval : number of passes to run before recording statistics
-        verbose : boolean to print statistics every stats_interval
+    mcmc_passes : number of MCMC passes to apply to data
+    stats_interval : number of passes to run before recording statistics
+    verbose : boolean to print statistics every stats_interval
     """
 
     def __init__(self, alpha, mu_0, kappa_0, nu_0, sigma_0,
-                    mcmc_passes=100, stats_interval=500,verbose=True):
+                    mcmc_passes=100, stats_interval=500, ward=False,
+                    n_clusters=7, verbose=True):
         """
         Initialize ddCRP object.
         """
@@ -37,6 +39,8 @@ class ddCRP(object):
         self.sigma0 = np.float(sigma_0)
         self.mcmc_passes = np.int(mcmc_passes)
         self.stats_interval = np.int(stats_interval)
+        self.ward = ward
+        self.n_clusters = n_clusters
         self.verbose = verbose
 
 
@@ -47,23 +51,36 @@ class ddCRP(object):
 
         Parameters:
         - - - - -
-            features : data array of features for each sample
-            adj_list : adjacency list of samples
-            init_c : initialized cortical map, default = []
-            gt_z : ground truth map for computing normalized mutual information
-            edge_prior : nested dictionary, probability of neighboring vertices beloning
-                        to same parcels
+        features : array
+                data array of features for each sample
+        adj_list : dictionary
+                adjacency list of samples
+        init_c : array
+                initialized cortical map, default = []
+        gt_z : array
+                ground truth map for computing normalized mutual information
+        edge_prior : dictionary
+                nested dictionary, probability of neighboring vertices beloning
+                to same parcels
         """
 
         # initialize Gibbs sampling object
-        gibbs = Gibbs()
+        gibbs = sampling.Gibbs()
         nvox = len(adj_list)
+
+        # normalize each feature to have zero mean, unit variance
+        features = statistics.Normalize(features)
 
         stats = {'times': [],'lp': [],'max_lp': [],
                     'K': [],'z': np.empty((0,nvox)),
                     'c': np.empty((0,nvox)),'NMI': []}
 
         # initialize parent vector, if not provided
+        # if ward parameter is set to True, will
+        if self.ward:
+
+            init_c = ward_clustering.Ward(features,adj_list,self.n_clusters)
+
         if not np.any(init_c):
             c = np.zeros((nvox,))
             for i in np.arange(nvox):
@@ -81,7 +98,7 @@ class ddCRP(object):
         G = G.tolil()
 
         # compute initial parcel count and parcel assignments
-        [K, z, parcels] = ConnectedComponents(G)
+        [K, z, parcels] = subgraphs.ConnectedComponents(G)
         self.init_z = z
 
         # compute log-likelihood of initial cortical map
@@ -121,7 +138,7 @@ class ddCRP(object):
                     rem_delta_lp, z_rem, parcels_rem = -np.log(self.alpha), z, parcels
                 else:
                     # otherwise compute new connected components
-                    K_rem, z_rem, parcels_rem = ConnectedComponents(G)
+                    K_rem, z_rem, parcels_rem = subgraphs.ConnectedComponents(G)
 
                     # if number of components changed
                     if K_rem != K:
@@ -145,11 +162,11 @@ class ddCRP(object):
 
                     # (possibly) new merge
                     elif z_rem[n] != z_rem[i]:
-                        lp[j] = self._LogProbDiff(parcels_rem, z_rem[i], 
+                        lp[j] = self._LogProbDiff(parcels_rem, z_rem[i],
                                                     z_rem[n],features)
 
                 # sample new neighbor according to Gibbs
-                new_neighbor = gibbs.fit(lp)
+                new_neighbor = gibbs.sample(lp)
                 if new_neighbor < len(adj_list_i):
                     c[i] = adj_list_i[new_neighbor]
                 else:
@@ -157,7 +174,7 @@ class ddCRP(object):
 
                 curr_lp = curr_lp + rem_delta_lp + lp[new_neighbor]
                 G[i,c[i]] = 1
-                [K,z,parcels] = ConnectedComponents(G)
+                [K,z,parcels] = subgraphs.ConnectedComponents(G)
                 steps += 1
 
         stats = statistics.UpdateStats(stats, t0, curr_lp, max_lp,
@@ -176,45 +193,47 @@ class ddCRP(object):
 
         Parameters:
         - - - - -
-            parcels : dictionary mapping cluster IDs to data indices
-            features : array of features for full dataset
+        parcels : dictionary
+                mapping between cluster ID and sample indices
+        features : array
+                data samples
+
         Returns:
         - - - -
-            lp : marginal log-likelihood of a whole parcelation
+        lp : float
+                marginal log-likelihood of a whole parcelation
         """
 
-        features = [features[idx,:] for idx in parcels.values()]
+        feats = [features[idx,:] for idx in parcels.values()]
 
-        # compute sufficient statistics of each parcel,
-        # stored in a list of lists
-        sufficient = map(self._sufficient_statistics,features)
+        lp = 0
 
-        # compute marginal parameters of each parcel,
-        # stored in list of lists
-        marginals = map(self._marginal_parameters,sufficient)
+        for parc,idx in parcels.items():
+            sufficient = self._sufficient_statistics(feats[parc])
+            marginals = self._marginal_parameters(sufficient)
+            cluster_prob = self._LikelihoodCluster(marginals,sufficient)
 
-        # compute log-likelihood of each parcel,
-        # store in list
-        cluster_probs = map(self._LikelihoodCluster,marginals,sufficient)
-
-        # compute full-parcellation log-likelhood
-        lp = np.sum(cluster_probs)
+            lp += cluster_prob
 
         return lp
-    
+
 
     def _LikelihoodCluster(self, params, sufficient):
         """
         Computes the log marginal likelihood of a single cluster using the
         a Normal likelihood and Normal-Inverse-Chi-Squared prior.
-        
+
         Parameters:
         - - - - -
-            params : marginal hyperparameters of cluster
-            sufficient : sufficient statistics of cluster
+        params : list
+                marginal hyperparameters of single cluster
+        sufficient : list
+                sufficient statistics of single cluster
+
         Returns:
         - - - -
-            lp : marginal log-likelhood of a single cluster
+        lp : float
+                marginal log-likelhood of a single cluster
         """
 
         kappa,nu,sigma = params[0:3]
@@ -225,7 +244,7 @@ class ddCRP(object):
         gam = gammaln(nu/2) - gammaln(self.nu0/2)
 
         # terms with square roots in likelihood function
-        inner = (1./2) * (np.log(self.kappa0) + self.nu0*np.log(self.nu0*self.sigma0) - 
+        inner = (1./2) * (np.log(self.kappa0) + self.nu0*np.log(self.nu0*self.sigma0) -
                          np.log(kappa) - nu*np.log(nu) - n*np.log(np.pi))
 
         # sum of sigma_n for each feature
@@ -242,13 +261,17 @@ class ddCRP(object):
 
         Parameters:
         - - - - -
-            parcel_split : indices of each component in split map
-            split_l1 , split_l2 : label values of components to merge
-            features : input feature array
+        parcel_split : dictionary
+                mapping of cluster ID to sample indices
+        split_l1 , split_l2 : int
+                label values of components to merge
+        features : array
+                data samples
         Returns:
         - - - -
-            ld : log-likelihood difference between merging and splitting 
-                    two clusters
+        ld : float
+                log of likelihood ratio between merging and splitting
+                two clusters
         """
 
         merged_indices = np.concatenate([parcel_split[split_l1],
@@ -275,12 +298,17 @@ class ddCRP(object):
 
         Parameters:
         - - - - -
-            parcel_split : indices of each component in split map
-            split_l1 , split_l2 : label values of components to merge
-            features : input feature array
+        parcel_split : dictionary
+                mapping of cluster ID to sample indices
+        split_l1 , split_l2 : int
+                label values of components to merge
+        features : array
+                data samples
+
         Returns:
         - - - -
-            split_ll : log-likelihood of two split clusters
+        split_ll : float
+                log-likelihood of two split clusters
         """
 
         idx1 = parcel_split[split_l1]
@@ -298,7 +326,7 @@ class ddCRP(object):
         split_ll = lp_1 + lp_2
 
         return split_ll
- 
+
 
     def _sufficient_statistics(self, cluster_features):
         """
@@ -306,12 +334,17 @@ class ddCRP(object):
 
         Parameters:
         - - - - -
-            cluster_features : data array for single cluster 
+        cluster_features : array
+                data array for single cluster
+
         Returns:
         - - - -
-            n : sample size
-            mu : mean of each feature
-            ssq : sum of squares of each feature
+        n : int
+                sample size
+        mu : array
+                mean of each feature
+        ssq : array
+                sum of squares of each feature
         """
 
         # n samples
@@ -350,5 +383,3 @@ class ddCRP(object):
         sigmaN = (1./nuN) * (self.nu0*self.sigma0 + ssq + deviation)
 
         return [kappaN,nuN,sigmaN]
-
-    

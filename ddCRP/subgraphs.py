@@ -9,7 +9,17 @@ def ConnectedComponents(G):
     
     Parameters:
     - - - - -
-        G : sparse array
+        G : array
+            sparse graph of current clustering
+
+    Returns:
+    - - - -
+        K : int
+            number of components
+        z : array
+            cluster assignment of each sample
+        parcels : dictionary
+                    mapping between cluster ID and sample indices
     """
     
     [K,components] = csgraph.connected_components(G, directed=False,
@@ -30,8 +40,10 @@ class ClusterSpanningTrees(object):
 
     Parameters:
     - - - - -
-        adj_list : original adjacency list of data
-        z : clustering
+        adj_list : dictionary
+                    adjacency list of samples
+        z : array
+            initial clustering
     """
 
     def __init__(self, adj_list, z):
@@ -42,6 +54,12 @@ class ClusterSpanningTrees(object):
     def fit(self):
         """
         Compute connected components of graph.
+
+        Returns:
+        - - - -
+            c : array
+                mininium spanning trees of clustering, where index c[i] = parent
+                of node i
         """
 
         self._filter_adjacency()
@@ -56,8 +74,10 @@ class ClusterSpanningTrees(object):
 
         Parameters:
         - - - - -
-            adj_list : input adjacency list
-            z : input clustering
+            adj_list : dictionary
+                        input adjacency list
+            z : array
+                input clustering
         """
 
         adj_list = self.adj_list.copy()
@@ -71,7 +91,12 @@ class ClusterSpanningTrees(object):
 
     def _construct_sparse(self):
         """
-        Construct sparse matrix from filtered adjacency list.
+        Construct sparse matrix from adjacency list.
+
+        Returns:
+        - - - -
+            c : array
+                minimum spanning trees of clustering
         """
         nvox = len(self.adj_list.keys())
         neighbor_count = [len(self.adj_list[k]) for k in self.adj_list.keys()]
@@ -85,7 +110,7 @@ class ClusterSpanningTrees(object):
                 node_list[next_edge:(next_edge+neighbor_count[i])] = i
                 next_edge += neighbor_count[i]
 
-        node_list = map(int, node_list)
+        node_list = list(map(int, node_list))
 
         G = csc_matrix((np.ones(len(node_list)),
                                (node_list,

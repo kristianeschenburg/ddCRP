@@ -1,6 +1,29 @@
 import numpy as np
 import time
 
+def Normalize(D):
+
+	"""
+	Method to normalize feature matrix.
+
+	Parameters:
+	- - - - -
+		D : input feature matrix
+
+	Returns:
+	- - - -
+		D_norm : normalized feature matrix
+	"""
+
+	mu = D.mean(0)
+	stdev = D.std(0)
+
+	zs = (stdev != 0)
+
+	D_norm = (D[:,zs] - mu[zs][None,:]) / stdev[zs][None,:]
+
+	return D_norm
+
 
 def UpdateStats(stats, t0, curr_lp, max_lp, K, z, c, steps, gt_z, map_z, verbose):
 	"""
