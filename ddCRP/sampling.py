@@ -11,7 +11,6 @@ class Gibbs(object):
 
 		pass
 
-
 	def sample(self, lp):
 		max_lp = lp.max()
 		normLogP = lp - (max_lp + np.log(np.exp(lp-max_lp).sum()))
@@ -20,6 +19,6 @@ class Gibbs(object):
 		p[np.isinf(p)] = 0
 
 		cumP = np.cumsum(p)
-		i = np.where(cumP>random.random())[0][0]
+		i = np.where(cumP > random.random())[0][0]
 
 		return i
