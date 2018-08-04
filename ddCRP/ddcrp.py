@@ -25,9 +25,11 @@ class ddCRP(object):
     verbose : boolean to print statistics every stats_interval
     """
 
-    def __init__(self, alpha, mu_0, kappa_0, nu_0, sigma_0,
+    def __init__(
+        self, alpha, mu_0, kappa_0, nu_0, sigma_0,
         mcmc_passes=100, stats_interval=500, ward=False,
-        n_clusters=7, verbose=True):
+            n_clusters=7, verbose=True):
+
         """
         Initialize ddCRP object.
         """
