@@ -1,5 +1,4 @@
 import numpy as np
-import collections
 from scipy import stats
 
 
@@ -41,7 +40,7 @@ class SampleSynthetic(object):
         Fit prior models and generate synthetic data.
         """
 
-        self.synth_ = self.synthetic_labels()
+        self._synthetic_labels()
         [pcs, prms, pf, f] = self.synthetic_features(self.synth_.z_)
 
         self.parcels_ = pcs
@@ -59,9 +58,6 @@ class SampleSynthetic(object):
                     type of synthetic data to generate
         """
         sqrtN = 18
-
-        SynthData = collections.namedtuple(
-            'SynthData', ['adj_list_', 'z_', 'coords_'])
 
         coords = np.zeros((sqrtN**2, 2))
         adj_list = np.empty(sqrtN**2, dtype=object)
@@ -161,9 +157,8 @@ class SampleSynthetic(object):
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 
-        synth = SynthData(adj_list, z, coords)
-
-        return synth
+        self.z_ = z
+        self.adj_list_ = adj_list
 
     def synthetic_features(self, z):
         """

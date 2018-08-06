@@ -2,8 +2,7 @@ import numpy as np
 import time
 
 
-def UpdateStats(
-	stats, t0, curr_lp, max_lp, K, z, c, steps,
+def UpdateStats(stats, t0, curr_lp, max_lp, K, z, c, steps,
 	gt_z, map_z, deltaC, verbose):
 	"""
 	Update diagnostic statistics.
@@ -13,26 +12,18 @@ def UpdateStats(
 	t0 : float
 		initial start time
 	curr_lp : float
-		current log-probability of map
-	max_lp : float
-		max log-probability
-	K : int
-		number of clusters
-	z : array
-		current map
-	c : array
-		current parent links
-	steps : int
-		total number of steps taken
-	gt_z : array
-		ground truth map
-	map_z : array
-		maximum a-posterior map
-	deltaC : int
-		number of vertices that changed label at current iteration
-	verbose : bool
-		flag to print status updates
+	current log-probability of map
+	max_lp : max log-probability
+	K : number of clusters
+	z : current map
+	c : current parent links
+	steps : total number of steps taken
+	gt_z : ground truth map
+	map_z : maximum a-posterior map
+	deltaC : number of vertices that changed label at current iteration
+	verbose : flag to print status updates
 	"""
+
 	stats['lp'].append(curr_lp)
 	stats['max_lp'].append(max_lp)
 	stats['K'].append(K)
@@ -42,8 +33,7 @@ def UpdateStats(
 	stats['times'].append(curr_time)
 	if verbose:
 	    print('Step: ' + str(steps) + ' Time: ' + str(curr_time) +
-				' LP: ' + str(curr_lp) + ' K: ' +
-				str(K) + ' MaxLP: ' + str(max_lp))
+	            ' LP: ' + str(curr_lp) + ' K: ' + str(K) + ' MaxLP: ' + str(max_lp))
 
 	if np.any(gt_z):
 		stats['NMI'].append(NMI(gt_z, map_z))
@@ -51,43 +41,37 @@ def UpdateStats(
 	return stats
 
 
-def delta_C(parcels_old,parcels_new,normed=False):
+def delta_C(parcels_old,parcels_new):
+
 	"""
 	Compute the number of vertices that change connected component from
 	old parcellation to new parcellation.
+
 	Parameters:
 	- - - - -
-	parcels_old : dictionary
-			old connected component sample assignments
-	parcels_new : dictionary
-			new connected component sample assignments
+		parcels_old : dictionary
+				old connected component sample assignments
+		parcels_new : dictionary
+				new connected component sample assignments
+
 	Returns:
 	- - - -
-	deltaC : int
-		number of vertices that changed label
+
 	"""
 
-	new = set(map(len, parcels_new.values()))
-	old = set(map(len, parcels_old.values()))
-
-	deltaC = np.int32(list(new.difference(old))).sum()
-
-	if normed:
-		deltaC = deltaC / np.sum(list(new))
-
-	return deltaC
 
 def Normalize(D):
+
 	"""
 	Method to normalize feature matrix.
+
 	Parameters:
 	- - - - -
-	D : array
-		input feature matrix
+		D : input feature matrix
+
 	Returns:
 	- - - -
-	D_norm : array
-		normalized feature matrix
+		D_norm : normalized feature matrix
 	"""
 
 	mu = D.mean(0)
@@ -102,11 +86,11 @@ def Normalize(D):
 
 def NMI(z1, z2):
 	"""
-	Compute normalized mutual information between two maps.
+	Compute normalized mutual information between two maps.two
+
 	Parameters:
 	- - - - -
-	z1, z2 : array
-		maps to compare
+		z1, z2 : maps to compare
 	"""
 
 	N = len(z1)
@@ -121,7 +105,7 @@ def NMI(z1, z2):
 	H2 = (-p2*np.log(p2)).sum()
 
 	joint = np.histogram2d(z1, z2,
-				[np.arange(0, z1.max()+2), range(0, z2.max()+2)], normed=True)
+				[range(0, z1.max()+2), range(0, z2.max()+2)],normed=True)
 	joint_p = joint[0]
 	pdiv = joint_p/np.outer(p1, p2)
 	pdiv[joint_p == 0] = 1

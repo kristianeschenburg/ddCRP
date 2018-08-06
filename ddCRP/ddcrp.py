@@ -177,15 +177,21 @@ class ddCRP(object):
                 else:
                     c[i] = i
 
+                # update current full log-likelihood with new parcels
                 curr_lp = curr_lp + rem_delta_lp + lp[new_neighbor]
+                # add new edge to parent graph
                 G[i, c[i]] = 1
-                [K, z, parcels] = subgraphs.ConnectedComponents(G)
+                # compute new connected components
+                [K_new, z_new, parcels_new] = subgraphs.ConnectedComponents(G)
+                deltaC = statistics.delta_C(parcels, parcels_new)
+                K, z, parcels = K_new, z_new, parcels_new
                 steps += 1
 
+        # update diagnostic statistics
         stats = statistics.UpdateStats(
             stats, t0, curr_lp, max_lp, K,
             list(z), list(c), steps, gt_z,
-            map_z, self.verbose)
+            map_z, deltaC, self.verbose)
 
         # for visualization purposes
         map_z[np.where(map_z == 0)[0]] = map_z.max() + 1
