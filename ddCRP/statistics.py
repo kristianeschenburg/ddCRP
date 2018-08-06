@@ -1,13 +1,12 @@
 import numpy as np
 import time
+from surface_adjacency import adjacency
 
+def UpdateStats(stats, t0, curr_lp, max_lp, K, z, c, steps,
+	gt_z, map_z, deltaC, boundC, verbose=True):
 
-def UpdateStats(
-	stats, t0, curr_lp, max_lp, K, z, c, steps,
-	gt_z, map_z, deltaC, verbose):
 	"""
 	Update diagnostic statistics.
-
 	Parameters:
 	- - - - -
 	t0 : float
@@ -30,6 +29,8 @@ def UpdateStats(
 		maximum a-posterior map
 	deltaC : int
 		number of vertices that changed label at current iteration
+	boundC : int
+		number of boundary vertices at current iteration
 	verbose : bool
 		flag to print status updates
 	"""
@@ -40,10 +41,14 @@ def UpdateStats(
 	stats['c'] = np.row_stack([stats['c'], c])
 	curr_time = time.clock() - t0
 	stats['times'].append(curr_time)
+	stats['deltaC'].append(deltaC)
+	stats['boundC'].append(boundC)
+
 	if verbose:
-	    print('Step: ' + str(steps) + ' Time: ' + str(curr_time) +
-				' LP: ' + str(curr_lp) + ' K: ' +
-				str(K) + ' MaxLP: ' + str(max_lp))
+		print(
+			'Step: '+str(steps) + ' Time: ' + str(curr_time) +
+			' LP: ' + str(curr_lp) + ' K: ' + str(K) + ' MaxLP: ' +
+			str(max_lp))
 
 	if np.any(gt_z):
 		stats['NMI'].append(NMI(gt_z, map_z))
@@ -51,7 +56,32 @@ def UpdateStats(
 	return stats
 
 
-def delta_C(parcels_old,parcels_new,normed=False):
+def boundaries(label, adj_list, normed=True):
+	"""
+	Compute number of boundary vertices in label map.
+
+	Parameters:
+	- - - - -
+	label : array
+		cortical map
+	adjacency : dictionary
+		adjacency list
+	Returns:
+	- - - -
+	boundC : int
+		number of vertics that exist at parcel boundaries
+	"""
+
+	boundC = adjacency.BoundaryMap(label, adj_list).find_boundaries()
+	boundC = boundC.sum()
+
+	if normed:
+		boundC = boundC / len(label)
+
+	return boundC
+
+
+def delta_C(parcels_old, parcels_new, normed=False):
 	"""
 	Compute the number of vertices that change connected component from
 	old parcellation to new parcellation.
@@ -76,6 +106,7 @@ def delta_C(parcels_old,parcels_new,normed=False):
 		deltaC = deltaC / np.sum(list(new))
 
 	return deltaC
+
 
 def Normalize(D):
 	"""
@@ -120,8 +151,10 @@ def NMI(z1, z2):
 	p2[p2 == 0] = 1
 	H2 = (-p2*np.log(p2)).sum()
 
-	joint = np.histogram2d(z1, z2,
-				[np.arange(0, z1.max()+2), range(0, z2.max()+2)], normed=True)
+	joint = np.histogram2d(
+		z1, z2, [np.arange(0, z1.max()+2), np.arange(0, z2.max()+2)],
+		normed=True)
+
 	joint_p = joint[0]
 	pdiv = joint_p/np.outer(p1, p2)
 	pdiv[joint_p == 0] = 1

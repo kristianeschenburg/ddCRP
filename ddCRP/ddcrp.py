@@ -73,7 +73,8 @@ class ddCRP(object):
         stats = {
             'times': [], 'lp': [], 'max_lp': [],
             'K': [], 'z': np.empty((0, nvox)),
-            'c': np.empty((0, nvox)), 'NMI': []}
+            'c': np.empty((0, nvox)), 'NMI': [],
+            'deltaC': [], 'boundC': []}
 
         # initialize parent vector, if not provided
         # if ward parameter is set to True, will
@@ -183,7 +184,9 @@ class ddCRP(object):
                 G[i, c[i]] = 1
                 # compute new connected components
                 [K_new, z_new, parcels_new] = subgraphs.ConnectedComponents(G)
+
                 deltaC = statistics.delta_C(parcels, parcels_new)
+                boundC = statistics.boundaries(z_new, adj_list)
                 K, z, parcels = K_new, z_new, parcels_new
                 steps += 1
 
@@ -191,7 +194,7 @@ class ddCRP(object):
         stats = statistics.UpdateStats(
             stats, t0, curr_lp, max_lp, K,
             list(z), list(c), steps, gt_z,
-            map_z, deltaC, self.verbose)
+            map_z, deltaC, boundC, self.verbose)
 
         # for visualization purposes
         map_z[np.where(map_z == 0)[0]] = map_z.max() + 1
