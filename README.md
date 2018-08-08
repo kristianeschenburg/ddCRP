@@ -31,7 +31,7 @@ crp.fit(synth.features_, synth.adj_list, gt_z=synth.z_)
 
 ```
 
-![](https://github.com/kristianeschenburg/ddCRP/tree/master/ddCRP/figures/ell.jpg)
+![](https://github.com/kristianeschenburg/ddCRP/blob/master/ddCRP/figures/ell.jpg)
 
 For more information on the Chinese Restaurant Process, see:
 
