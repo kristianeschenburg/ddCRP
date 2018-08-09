@@ -5,7 +5,6 @@ from sklearn.metrics import normalized_mutual_info_score as NMI
 
 
 def test_normalize():
-
     """
     Test to check feature normalization.
     """

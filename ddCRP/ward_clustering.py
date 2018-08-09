@@ -70,7 +70,7 @@ def ClusterTree(D, adj_list):
     """
 
     # Compute squared euclidean distance Y between rows
-    Qx = np.tile(np.linalg.norm(D, axis=1)**2,(D.shape[0], 1))
+    Qx = np.tile(np.linalg.norm(D, axis=1)**2, (D.shape[0], 1))
     Y = Qx + Qx.transpose()-2*np.dot(D, D.transpose())
     Y = spatial.distance.squareform(Y, checks=False)
     Y[Y < 0] = 0  # Correct for numerical errors in very similar rows
@@ -130,15 +130,17 @@ def ClusterTree(D, adj_list):
         # Update Y with this new cluster i containing old clusters i and j
         U = valid_clusts
         U[np.array([i, j])] = 0
-        I = PdistInds(i, N, U)
-        J = PdistInds(j, N, U)
-        Y[I] = ((C[R[U]]+C[R[i]])*Y[I] +
-                (C[R[U]]+C[R[j]])*Y[J] - C[R[U]]*v)/(C[R[i]]+C[R[j]]+C[R[U]])
+        oldI = PdistInds(i, N, U)
+        oldJ = PdistInds(j, N, U)
+        Y[oldI] = ((
+            C[R[U]]+C[R[i]])*Y[oldI] +
+            (C[R[U]]+C[R[j]])*Y[oldJ] -
+            C[R[U]]*v)/(C[R[i]]+C[R[j]] + C[R[U]])
 
         # Add j's connections to new cluster i
-        new_conns = connected[J] & ~connected[I]
-        connected[I] = connected[I] | new_conns
-        conn_inds = np.sort(np.concatenate((conn_inds, I[new_conns])))
+        new_conns = connected[oldJ] & ~connected[oldI]
+        connected[oldI] = connected[oldI] | new_conns
+        conn_inds = np.sort(np.concatenate((conn_inds, oldI[new_conns])))
 
         # Remove all of j's connections from conn_inds and connected
         U[i] = 1
@@ -190,12 +192,12 @@ def PdistInds(row, N, valid_flags):
         inds1 = np.concatenate((
             [row-1],
             (row-1) + np.cumsum(np.arange(N-2, N-row-1, -1))))
-        I = np.concatenate((
+        oldI = np.concatenate((
             inds1,
             [-1],
             np.arange(inds1[-1]+N-row, inds1[-1]+2*N-2*row-1)))
     else:
-        I = np.arange(N)-1
+        oldI = np.arange(N)-1
 
-    I = I[valid_flags];
-    return I
+    oldI = oldI[valid_flags]
+    return oldI

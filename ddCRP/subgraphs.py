@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import csgraph,csc_matrix
+from scipy.sparse import csgraph, csc_matrix
 import random
 
 
@@ -109,10 +109,10 @@ class ClusterSpanningTrees(object):
 
         node_list = list(map(int, node_list))
 
-        G = csc_matrix((np.ones(len(node_list)),
-                               (node_list,
-                                np.hstack(self.adj_list.values()))),
-                                shape=(nvox, nvox))
+        G = csc_matrix((
+            np.ones(len(node_list)),
+            (node_list, np.hstack(self.adj_list.values()))),
+            shape=(nvox, nvox))
 
         # Construct spanning tree in each cluster
         minT = csgraph.minimum_spanning_tree(G)
