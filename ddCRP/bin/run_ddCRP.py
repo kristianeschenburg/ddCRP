@@ -69,9 +69,14 @@ else:
     gt = args.gt
 
 # load surface, filter and remap adjacency list
-S = adjacency.SurfaceAdjacency(args.surface)
+surface = nib.load(args.surface)
+vertices = surface.darrays[0].data
+faces = surface.darrays[1].data
+
+S = adjacency.SurfaceAdjacency(vertices, faces)
 S.generate()
-adj_list = S.filtration(filter_indices=indices, remap=True)
+adj_list = S.filtration(
+    filter_indices=indices, remap=True)
 
 # get hyperparameters
 alpha = args.alpha
@@ -89,6 +94,7 @@ crp = ddCRP.ddCRP(alpha=alpha, mu_0=mu, kappa_0=kappa, nu_0=nu, sigma_0=sigma,
 
 crp.fit(features=features, adj_list=adj_list, gt_z=gt)
 
+
 print('Saving model results.')
 
 keys = ['alpha', 'mu', 'kappa', 'nu', 'sigma', 'ward']
@@ -98,14 +104,17 @@ param_tuple = [(k, param_map[k]) for k in keys]
 extension = ''.join("%s." % '.'.join(map(str, x)) for x in param_tuple)
 outbase = '.'.join([args.outbase, extension])
 
+
 print('Saving statistics.')
 sio.savemat(''.join([outbase, 'statistics.mat']), mdict=crp.stats_)
+
 
 print('Saving MAP label.')
 full_mapz = np.zeros((len(cdata),))
 print('FullMap shape: {:}'.format(full_mapz.shape))
 full_mapz[indices] = crp.map_z_
 write.save(full_mapz, ''.join([outbase, 'map_z.func.gii']), 'CortexLeft')
+
 
 print('Saving figures.')
 fig, [[ax1, ax2, ax3], [ax4, ax5, ax6]] = plt.subplots(1, 3, figsize=(16, 5))
