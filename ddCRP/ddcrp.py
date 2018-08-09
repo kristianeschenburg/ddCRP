@@ -106,7 +106,7 @@ class ddCRP(object):
         curr_lp = self._fullProbabilityDDCRP(parcels, features)
 
         max_lp = -1.*np.inf
-        map_z = []
+        map_z, boundC, deltaC = [], [], []
         t0 = time.time()
         steps = 0
 
@@ -130,7 +130,8 @@ class ddCRP(object):
                     stats = statistics.UpdateStats(
                         stats, t0, curr_lp, max_lp,
                         K, list(z), list(c), steps,
-                        gt_z, map_z, self.verbose)
+                        gt_z, map_z, deltaC, boundC,
+                        self.verbose)
 
                 # remove current link to parent
                 G[i, c[i]] = 0
@@ -221,7 +222,7 @@ class ddCRP(object):
 
         sufficient = map(self._sufficient_statistics, feats)
         marginals = map(self._marginal_parameters, sufficient)
-        cluster_prob = map(self._LikelihoodCluster, [marginals, sufficient])
+        cluster_prob = map(self._LikelihoodCluster, marginals, sufficient)
 
         lp = np.sum(list(cluster_prob))
 
