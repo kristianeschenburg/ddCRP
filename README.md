@@ -33,7 +33,7 @@ crp.fit(synth.features_, synth.adj_list, gt_z=synth.z_)
 
 ```
 
-!['Model performance on 'ell' synthetic dataset.'](https://github.com/kristianeschenburg/ddCRP/figures/ell.jpg)
+![](https://github.com/kristianeschenburg/ddCRP/blob/master/ddCRP/figures/ell.jpg)
 
 For more information on the Chinese Restaurant Process, see:
 
