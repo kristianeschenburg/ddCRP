@@ -2,8 +2,6 @@ import numpy as np
 import time
 from surface_utilities import adjacency
 
-from metrics import
-
 
 def UpdateStats(stats, t0, curr_lp, max_lp, K, z, c, steps,
                 gt_z, map_z, deltaC, boundC, verbose=True):
