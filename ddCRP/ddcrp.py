@@ -144,7 +144,8 @@ class ddCRP(object):
                     parcels_rem = parcels
                 else:
                     # otherwise compute new connected components
-                    K_rem, z_rem, parcels_rem = subgraphs.ConnectedComponents(G)
+                    K_rem, z_rem, parcels_rem = subgraphs.ConnectedComponents(
+                        G)
 
                     # if number of components changed
                     if K_rem != K:
