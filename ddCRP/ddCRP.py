@@ -82,21 +82,8 @@ class ddCRP(object):
 
             init_c = ward_clustering.Ward(features, adj_list, self.n_clusters)
 
-        if not np.any(init_c):
-            c = np.zeros((nvox,))
-            for i in np.arange(nvox):
-                neighbors = adj_list[i] + [i]
-                c[i] = neighbors[np.random.randint(low=0, high=len(neighbors))]
-        else:
-            c = init_c
-
-        c = c.astype(np.int32)
-
-        # initialize sparse linkage matrix
-        G = sparse.csc_matrix(
-            (np.ones((nvox, )), (np.arange(nvox), c)), shape=(nvox, nvox))
-
-        G = G.tolil()
+        # compute initial linkage matrix
+        [c, G] = self._sparse_linkage(adj_list, nvox, init_c)
 
         # compute initial parcel count and parcel assignments
         [K, z, parcels] = subgraphs.ConnectedComponents(G)
@@ -385,3 +372,35 @@ class ddCRP(object):
         sigmaN = (1./nuN) * (self.nu0*self.sigma0 + ssq + deviation)
 
         return [kappaN, nuN, sigmaN]
+
+    def _sparse_linkage(self, adj_list, nvox, init_c=None):
+
+        """
+        Compute source-to-target linkages and sparse neighborhood matrix.
+        Parameters:
+        - - - - -
+        adj_list: dictionary
+            adjacency list of samples
+        nvox: int
+            number of samples
+        init_c: array
+            initial source-to-taret linkages
+        """
+
+        if not np.any(init_c):
+            c = np.zeros((nvox,))
+            for i in np.arange(nvox):
+                neighbors = adj_list[i] + [i]
+                c[i] = neighbors[np.random.randint(low=0, high=len(neighbors))]
+        else:
+            c = init_c
+
+        c = c.astype(np.int32)
+
+        # initialize sparse linkage matrix
+        G = sparse.csc_matrix(
+            (np.ones((nvox, )), (np.arange(nvox), c)), shape=(nvox, nvox))
+
+        G = G.tolil()
+
+        return [c, G]
