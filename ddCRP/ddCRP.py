@@ -26,7 +26,7 @@ class ddCRP(object):
     """
 
     def __init__(
-        self, alpha, mu_0, kappa_0, nu_0, sigma_0,
+        self, alpha, mu0, kappa0, nu0, sigma0,
         mcmc_passes=100, stats_interval=500, ward=False,
             n_clusters=7, verbose=True):
 
@@ -35,10 +35,10 @@ class ddCRP(object):
         """
 
         self.alpha = np.float(alpha)
-        self.mu0 = np.float(mu_0)
-        self.kappa0 = np.float(kappa_0)
-        self.nu0 = np.float(nu_0)
-        self.sigma0 = np.float(sigma_0)
+        self.mu0 = np.float(mu0)
+        self.kappa0 = np.float(kappa0)
+        self.nu0 = np.float(nu0)
+        self.sigma0 = np.float(sigma0)
         self.mcmc_passes = np.int(mcmc_passes)
         self.stats_interval = np.int(stats_interval)
         self.ward = ward
