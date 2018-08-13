@@ -9,17 +9,17 @@ def ConnectedComponents(G):
 
     Parameters:
     - - - - -
-        G : array
-            sparse graph of current clustering
+    G : array
+        sparse graph of current clustering
 
-    Returns:
-    - - - -
-        K : int
-            number of components
-        z : array
-            cluster assignment of each sample
-        parcels : dictionary
-                    mapping between cluster ID and sample indices
+Returns:
+- - - -
+    K : int
+        number of components
+    z : array
+        cluster assignment of each sample
+    parcels : dictionary
+        mapping between cluster ID and sample indices
     """
 
     [K, components] = csgraph.connected_components(G, directed=False,
