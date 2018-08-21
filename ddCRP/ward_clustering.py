@@ -5,6 +5,10 @@ from scipy import cluster
 from ddCRP import statistics
 from ddCRP import subgraphs
 
+"""
+As based on original code by C. Baldassano (https://github.com/cbaldassano/Parcellating-connectivity/blob/release/python/WardClustering.py)
+"""
+
 
 def Ward(D, adj_list, n_clusters):
 

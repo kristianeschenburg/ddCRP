@@ -1,6 +1,10 @@
 import numpy as np
 from scipy.stats import invgamma, norm, multivariate_normal
 
+"""
+As based on oringal code by C. Baldassano (https://github.com/cbaldassano/Parcellating-connectivity/blob/release/python/LearnSynth.py)
+"""
+
 
 class SampleSynthetic(object):
     """

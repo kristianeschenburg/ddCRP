@@ -1,6 +1,10 @@
 import numpy as np
 import random
 
+"""
+As based on original code by C. Baldassano (https://github.com/cbaldassano/Parcellating-connectivity/blob/release/python/ddCRP.py)
+"""
+
 
 class Gibbs(object):
     """

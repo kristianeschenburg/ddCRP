@@ -2,6 +2,10 @@ import numpy as np
 from scipy.sparse import csgraph, csc_matrix
 import random
 
+"""
+As based on original code by C. Baldassano (https://github.com/cbaldassano/Parcellating-connectivity/blob/release/python/WardClustering.py)
+"""
+
 
 def ConnectedComponents(G):
     """

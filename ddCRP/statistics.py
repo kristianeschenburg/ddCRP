@@ -2,6 +2,10 @@ import numpy as np
 import time
 from surface_utilities import adjacency
 
+"""
+As based on original code by C. Baldassano (https://github.com/cbaldassano/Parcellating-connectivity/blob/release/python/StatsUtil.py)
+"""
+
 
 def UpdateStats(stats, t0, curr_lp, max_lp, K, z, c, steps,
                 gt_z, map_z, deltaC, boundC, verbose=True):
