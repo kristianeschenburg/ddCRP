@@ -1,6 +1,9 @@
 This is a package to apply the distance-dependent Chinese Restaurant Process (dd-CRP) to multi-dimensional graph-based data.  It is based roughly on code originally written by [Christopher Baldassano](https://github.com/cbaldassano/Parcellating-connectivity) (*Baldassano et al. (2015), Parcellating Connectivity In Spatial Maps. PeerJ 3:e784; DOI 10.7717/peerj.784*).
 
-In contrast to work presented by Baldassano et al. 2015 and Moyer et al. 2017, whose methods both model the univariate similarities within and between clusters, this method models the clusters themselves, placing priors on the connectivity features of each cluster.
+My primary contributions to this code are two-fold:  In contrast to work presented by Baldassano et al. 2015 and Moyer et al. 2017, whose methods both model the univariate similarities within and between clusters, this method models the clusters themselves, placing priors on the connectivity features of each cluster.
+
+  1. This version treats the high-dimensional feature vectors as being sampled from multivariate Gaussian distributions.  In contrast to C. Baldassano who samples similarities *between* feature vectors from a univariate Gaussian, and D. Moyer, who samples counts from a Poisson, this method actually attempts to model the data points themselves.
+  2. On a more aesthetic level, I have considerably refactored Balassano's original Python code to make this version object-oriented.  For usage examples, see below.
 
 Example of use on synthetic data:
 
