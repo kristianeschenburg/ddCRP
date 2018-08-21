@@ -41,3 +41,6 @@ For more information on the Chinese Restaurant Process, see:
   * Baldassano et al. (2015), Parcellating Connectivity In Spatial Maps. PeerJ 3:e784; DOI 10.7717/peerj.784
 
   * Moyer et al. (2017), A Restaurant Process Mixture Model for Connectivity Based Parcellation of the Cortex. 	arXiv:1703.00981
+
+  * Blei, David M. et al (2010), The Nested Chinese Restaurant Process and Bayesian
+Nonparametric Inference of Topic Hierarchies. JACM.
