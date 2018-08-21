@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import stats
+from scipy.stats import invgamma, norm, multivariate_normal
 
 
 class SampleSynthetic(object):
@@ -40,8 +40,8 @@ class SampleSynthetic(object):
         Fit prior models and generate synthetic data.
         """
 
-        self._synthetic_labels()
-        [pcs, prms, pf, f] = self.synthetic_features(self.synth_.z_)
+        self.synthetic_labels()
+        [pcs, prms, pf, f] = self.synthetic_features(self.z_)
 
         self.parcels_ = pcs
         self.params_ = prms
@@ -60,7 +60,7 @@ class SampleSynthetic(object):
         sqrtN = 18
 
         coords = np.zeros((sqrtN**2, 2))
-        adj_list = np.empty(sqrtN**2, dtype=object)
+        adj_list = {}.fromkeys(np.arange(sqrtN**2))
         for r in range(0, sqrtN):
             for c in range(0, sqrtN):
                 currVox = c + r*sqrtN
@@ -198,11 +198,10 @@ class SampleSynthetic(object):
             nu_0, sigma_0 : hyperparameters on prior variance
         """
 
-        x = stats.chi2.rvs(self.nu_0, size=[self.d, ])
-        sigma_p = (self.nu_0*self.sigma_0)/x
-        mu_p = stats.norm.rvs(self.mu_0, (sigma_p/self.kappa_0))
+        sig = invchi2(self.nu_0, self.sigma_0, self.d)
+        mu = norm.rvs(loc=self.mu_0, scale=(np.sqrt(sig)/self.kappa_0))
 
-        return [mu_p, sigma_p]
+        return [mu, sig]
 
     def sample_features(self, mu, sigma, d):
         """
@@ -215,8 +214,15 @@ class SampleSynthetic(object):
             d : number of samples
         """
 
-        samples = stats.multivariate_normal.rvs(mean=mu,
-                                                cov=np.diag(sigma),
-                                                size=[d, ])
+        samples = multivariate_normal.rvs(
+            mean=mu, cov=np.diag(sigma), size=[d, ])
 
         return samples
+
+
+def invchi2(nu, tau2, size):
+    """
+    Sample from an inverse-chi-squared distribution.
+    """
+
+    return invgamma(nu/2, (nu*tau2/2)).rvs(size=size)
