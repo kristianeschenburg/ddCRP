@@ -1,8 +1,8 @@
-This is a package to apply the distance-dependent Chinese Restaurant Process (dd-CRP) to multi-dimensional graph-based data.  It is based roughly on code originally written by [Christopher Baldassano](https://github.com/cbaldassano/Parcellating-connectivity).
+This is a package to apply the distance-dependent Chinese Restaurant Process (dd-CRP) to multi-dimensional graph-based data.  It is based roughly on code originally written by [Christopher Baldassano](https://github.com/cbaldassano/Parcellating-connectivity) ().
 
-My contributions to this package are two-fold:  In contrast to work presented by Baldassano and Moyer, whose methods both model the univariate similarities within and between clusters, this method models the clusters themselves, placing priors on the connectivity features of each cluster.
+My contributions to this package are two-fold:  In contrast to work presented by [Baldassano et al.](https://www.ncbi.nlm.nih.gov/pubmed/25737822) and [Moyer et al.](https://arxiv.org/abs/1703.00981), whose methods both model the univariate similarities within and between clusters, this method models the clusters themselves, placing priors on the connectivity features of each cluster.
 
-  1. This version treats the high-dimensional feature vectors as being sampled from multivariate Gaussian distributions.  In contrast to C. Baldassano who samples similarities *between* feature vectors from a univariate Gaussian, and D. Moyer, who samples counts from a Poisson, this method actually attempts to model the data points themselves.
+  1. This version treats the high-dimensional feature vectors as being sampled from multivariate Gaussian distributions.  In contrast to Baldassano et al. who sample similarities *between* feature vectors from a univariate Gaussian, and Moyer et al., who sample counts from a Poisson, this method models the data points themselves.
   2. On a more aesthetic level, I have considerably refactored Balassano's original Python code to make this version object-oriented.
 
 Example of use on synthetic data:
