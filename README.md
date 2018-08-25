@@ -6,9 +6,9 @@ My contributions to this package are three-fold:  In contrast to work presented 
 
   1. This version treats the high-dimensional feature vectors as being sampled from multivariate Gaussian distributions.  In contrast to Baldassano et al. who sample similarities *between* feature vectors from a univariate Gaussian, and Moyer et al., who sample counts from a Poisson, this method models the full-dimensional data points themselves.
   2. The prior distribution on features are based on an **abstract class** contained in ```PriorsBase.py``` called ```Prior``` that implements the following 3 methods:
-    - Prior.sufficient_statistics
-    - Prior.posterior_parameters
-    - Prior.log_likelihood
+      * Prior.sufficient_statistics
+      * Prior.posterior_parameters
+      * Prior.log_likelihood
 
     In theory, any model that implements the above three methods can be incorporated into ```Priors.py``` alongside the Normal-Inverse-Chi-Squared (```NIX```) and Normal-Inverse-Wishart (```NIW```) models.
   3. On a more aesthetic level, I have refactored much of Balassano's original Python code to make this version object-oriented and more user-friendly under the hood.
