@@ -1,6 +1,5 @@
 import numpy as np
 from scipy import sparse
-from scipy.special import gammaln
 
 from ddCRP import sampling
 from ddCRP import subgraphs
@@ -16,18 +15,37 @@ class ddCRP(object):
 
     Parameters:
     - - - - -
-    alpha : concentration parameter of CRP prior
-    mu_0, kappa_0 : hyperparameters on feature mean prior
-    nu_0, sigma_0 : hyperparameters on feature variance prior
+    alpha: float
+        concentration parameter of CRP prior
+    model: PriorBase
+        type of prior model to use for feature data
+    mcmc_passes: int
+        number of MCMC passes to apply to data
+    stats_interval: int
+        number of passes to run before recording statistics
+    verbose: bool
+        print statistics every stats_interval
 
-    mcmc_passes : number of MCMC passes to apply to data
-    stats_interval : number of passes to run before recording statistics
-    verbose : boolean to print statistics every stats_interval
+    Notes:
+    - - - -
+
+    The '''model''' argument assumes that whatever object is provided is a
+    subclass of the PriorBase.Prior abstract method.  The model must implement
+    the followng three methods:
+
+        - model.sufficient_statistics
+        - model.posterior_parameters
+        - model.log_likelihood
+
+    Any model that implements these methods will be accepted.  Currently, the
+    only two models that are implemented are the Normal-Inverse-Chi-Squared
+    and Normal-Inverse-Wishart models.  The NIX model treats each feature as
+    independent from the others, while the NIW model does not make this
+    assumption.
     """
 
     def __init__(
-        self, alpha, mu0, kappa0, nu0, sigma0,
-        mcmc_passes=100, stats_interval=500, ward=False,
+        self, alpha, model, mcmc_passes=100, stats_interval=500, ward=False,
             n_clusters=7, verbose=True):
 
         """
@@ -35,10 +53,7 @@ class ddCRP(object):
         """
 
         self.alpha = np.float(alpha)
-        self.mu0 = np.float(mu0)
-        self.kappa0 = np.float(kappa0)
-        self.nu0 = np.float(nu0)
-        self.sigma0 = np.float(sigma0)
+        self.model = model
         self.mcmc_passes = np.int(mcmc_passes)
         self.stats_interval = np.int(stats_interval)
         self.ward = ward
@@ -46,6 +61,7 @@ class ddCRP(object):
         self.verbose = verbose
 
     def fit(self, features, adj_list, init_c=None, gt_z=None, edge_prior=None):
+
         """
         Main function to fit the distance-dependent Chinese Restaurant Process.
         Parameters:
@@ -137,7 +153,7 @@ class ddCRP(object):
                     # if number of components changed
                     if K_rem != K:
                         # We split a cluster, compute change in likelihood
-                        rem_delta_lp = -self._LogProbDiff(
+                        rem_delta_lp = -self._LogProbDifference(
                             parcels_rem, z_rem[i], z_rem[c[i]], features)
 
                     else:
@@ -157,7 +173,7 @@ class ddCRP(object):
 
                     # (possibly) new merge
                     elif z_rem[n] != z_rem[i]:
-                        lp[j] = self._LogProbDiff(
+                        lp[j] = self._LogProbDifference(
                             parcels_rem, z_rem[i], z_rem[n], features)
 
                 # sample new neighbor according to Gibbs
@@ -206,52 +222,19 @@ class ddCRP(object):
                 marginal log-likelihood of a whole parcelation
         """
 
+        model = self.model
+
         feats = [features[idx, :] for idx in parcels.values()]
 
-        sufficient = map(self._sufficient_statistics, feats)
-        marginals = map(self._marginal_parameters, sufficient)
-        cluster_prob = map(self._LikelihoodCluster, marginals, sufficient)
+        suff_stats = map(model.sufficient_statistics, feats)
+        posteriors = map(model.posterior_parameters, suff_stats)
+        cluster_prob = map(model.log_likelihood, posteriors, suff_stats)
 
         lp = np.sum(list(cluster_prob))
 
         return lp
 
-    def _LikelihoodCluster(self, params, sufficient):
-        """
-        Computes the log marginal likelihood of a single cluster using the
-        a Normal likelihood and Normal-Inverse-Chi-Squared prior.
-        Parameters:
-        - - - - -
-        params : list
-                marginal hyperparameters of single cluster
-        sufficient : list
-                sufficient statistics of single cluster
-        Returns:
-        - - - -
-        lp : float
-                marginal log-likelhood of a single cluster
-        """
-
-        kappa, nu, sigma = params[0:3]
-        p = len(sigma)
-        n = sufficient[0]
-
-        # ratio of gamma functions
-        gam = gammaln(nu/2) - gammaln(self.nu0/2)
-
-        # terms with square roots in likelihood function
-        inner = (1./2) * (np.log(self.kappa0) + self.nu0*np.log(
-            self.nu0*self.sigma0) - np.log(kappa) -
-            nu*np.log(nu) - n*np.log(np.pi))
-
-        # sum of sigma_n for each feature
-        outer = (-nu/2.)*np.log(sigma).sum()
-
-        lp = p*(gam + inner) + outer
-
-        return lp
-
-    def _LogProbDiff(self, parcel_split, split_l1, split_l2, features):
+    def _LogProbDifference(self, parcel_split, split_l1, split_l2, features):
         """
         Compute change in log-likelihood when considering a merge.
 
@@ -270,16 +253,16 @@ class ddCRP(object):
                 two clusters
         """
 
+        model = self.model
+
         merged_indices = np.concatenate([parcel_split[split_l1],
                                         parcel_split[split_l2]])
 
-        # compute sufficient statistics and marginalized parameters
-        # of merged parcels
-        stats = self._sufficient_statistics(features[merged_indices, :])
-        phyp = self._marginal_parameters(stats)
-
-        # compute likelihood of merged parcels
-        merge_ll = self._LikelihoodCluster(phyp, stats)
+        # compute sufficient statistics, marginalized parameters
+        # and log-likelihood of merged parcels
+        merge_stats = model.sufficient_statistics(features[merged_indices, :])
+        merge_phyp = model.posterior_parameters(merge_stats)
+        merge_ll = model.log_likelihood(merge_phyp, merge_stats)
 
         # compute likelihood of split parcels
         split_ll = self._LogProbSplit(
@@ -305,73 +288,24 @@ class ddCRP(object):
         split_ll : float
                 log-likelihood of two split clusters
         """
+
+        model = self.model
+
         idx1 = parcel_split[split_l1]
         idx2 = parcel_split[split_l2]
 
-        suff1 = self._sufficient_statistics(features[idx1, :])
-        suff2 = self._sufficient_statistics(features[idx2, :])
+        suff1 = model.sufficient_statistics(features[idx1, :])
+        suff2 = model.sufficient_statistics(features[idx2, :])
 
-        phyp1 = self._marginal_parameters(suff1)
-        phyp2 = self._marginal_parameters(suff2)
+        phyp1 = model.posterior_parameters(suff1)
+        phyp2 = model.posterior_parameters(suff2)
 
-        lp_1 = self._LikelihoodCluster(phyp1, suff1)
-        lp_2 = self._LikelihoodCluster(phyp2, suff2)
+        lp_1 = model.log_likelihood(phyp1, suff1)
+        lp_2 = model.log_likelihood(phyp2, suff2)
 
         split_ll = lp_1 + lp_2
 
         return split_ll
-
-    def _sufficient_statistics(self, cluster_features):
-        """
-        Compute sufficient statistics for data.
-
-        Parameters:
-        - - - - -
-        cluster_features : array
-                data array for single cluster
-
-        Returns:
-        - - - -
-        n : int
-                sample size
-        mu : array
-                mean of each feature
-        ssq : array
-                sum of squares of each feature
-        """
-        # n samples
-        [n, _] = cluster_features.shape
-        # feature means
-        mu = cluster_features.mean(0)
-        # feature sum of squares
-        ssq = ((cluster_features-mu[None, :])**2).sum(0)
-
-        return [float(n), mu, ssq]
-
-    def _marginal_parameters(self, suff_stats):
-        """
-        Computes cluster-specific marginal likelihood hyperparameters
-        of a Normal / Normal-Inverse-Chi-Squared model.
-        Parameters:
-        - - - - -
-            suff_stats : sufficient statistics for single cluster
-        Returns:
-        - - - -
-            kappaN : updated kappa
-            nuN : updated nu
-            sigmaN : updated sigma
-        """
-        # extract sufficient statistics
-        n, mu, ssq = suff_stats[0:3]
-
-        # update kappa and nu
-        kappaN = self.kappa0 + n
-        nuN = self.nu0 + n
-
-        deviation = ((n*self.kappa0) / (n+self.kappa0)) * ((self.mu0 - mu)**2)
-        sigmaN = (1./nuN) * (self.nu0*self.sigma0 + ssq + deviation)
-
-        return [kappaN, nuN, sigmaN]
 
     def _sparse_linkage(self, adj_list, nvox, init_c=None):
 

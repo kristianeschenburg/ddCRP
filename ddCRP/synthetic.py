@@ -29,14 +29,14 @@ class SampleSynthetic(object):
         prior variance of second moment
     """
 
-    def __init__(self, kind, d, mu_0, kappa_0, nu_0, sigma_0):
+    def __init__(self, kind, d, mu0, kappa0, nu0, sigma0):
 
         self.kind = kind
         self.d = d
-        self.mu_0 = mu_0
-        self.kappa_0 = kappa_0
-        self.nu_0 = nu_0
-        self.sigma_0 = sigma_0
+        self.mu0 = mu0
+        self.kappa0 = kappa0
+        self.nu0 = nu0
+        self.sigma0 = sigma0
 
     def fit(self):
 
@@ -202,8 +202,8 @@ class SampleSynthetic(object):
             nu_0, sigma_0 : hyperparameters on prior variance
         """
 
-        sig = invchi2(self.nu_0, self.sigma_0, self.d)
-        mu = norm.rvs(loc=self.mu_0, scale=(np.sqrt(sig)/self.kappa_0))
+        sig = invchi2(self.nu0, self.sigma0, self.d)
+        mu = norm.rvs(loc=self.mu0, scale=(np.sqrt(sig)/self.kappa0))
 
         return [mu, sig]
 
