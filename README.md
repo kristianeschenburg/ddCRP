@@ -35,7 +35,7 @@ kappa = 0.0001
 nu = 1
 sigma = 1
 
-nix = Priors.NIX(mu0=mu, kappa0=kappa, nu0=nu, sigma0=sigma)
+nix = Priors.NIX2(mu0=mu, kappa0=kappa, nu0=nu, sigma0=sigma)
 ```
 
 Next, we sample **5-dimensional** synthetic data from the same prior distribution.  The ```synth``` object computes an adjacency list of our synthetic data (```synth.adj_list```), as well as a ground-truth label map (```synth.z_```).
