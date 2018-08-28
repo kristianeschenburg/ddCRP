@@ -28,10 +28,10 @@ class Prior(ABC):
         pass
 
     @abstractmethod
-    def log_likelihood(self):
+    def marginal_evidence(self):
 
         """
-        Method for computing marginalized log-likelihood of the data,
+        Method for computing marginal evidence of the data,
         given posterior parameters of the model.
         """
         pass

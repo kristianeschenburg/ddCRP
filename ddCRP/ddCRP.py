@@ -35,7 +35,7 @@ class ddCRP(object):
 
         - model.sufficient_statistics
         - model.posterior_parameters
-        - model.log_likelihood
+        - model.marginal_evidence
 
     Any model that implements these methods will be accepted.  Currently, the
     only two models that are implemented are the Normal-Inverse-Chi-Squared
@@ -228,7 +228,7 @@ class ddCRP(object):
 
         suff_stats = map(model.sufficient_statistics, feats)
         posteriors = map(model.posterior_parameters, suff_stats)
-        cluster_prob = map(model.log_likelihood, posteriors, suff_stats)
+        cluster_prob = map(model.marginal_evidence, posteriors, suff_stats)
 
         lp = np.sum(list(cluster_prob))
 
@@ -262,7 +262,7 @@ class ddCRP(object):
         # and log-likelihood of merged parcels
         merge_stats = model.sufficient_statistics(features[merged_indices, :])
         merge_phyp = model.posterior_parameters(merge_stats)
-        merge_ll = model.log_likelihood(merge_phyp, merge_stats)
+        merge_ll = model.marginal_evidence(merge_phyp, merge_stats)
 
         # compute likelihood of split parcels
         split_ll = self._LogProbSplit(
@@ -300,8 +300,8 @@ class ddCRP(object):
         phyp1 = model.posterior_parameters(suff1)
         phyp2 = model.posterior_parameters(suff2)
 
-        lp_1 = model.log_likelihood(phyp1, suff1)
-        lp_2 = model.log_likelihood(phyp2, suff2)
+        lp_1 = model.marginal_evidence(phyp1, suff1)
+        lp_2 = model.marginal_evidence(phyp2, suff2)
 
         split_ll = lp_1 + lp_2
 

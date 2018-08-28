@@ -1,9 +1,13 @@
+import matplotlib.pyplot as plt
+
 import numpy as np
 from scipy.stats import invgamma, norm, multivariate_normal
 
 """
 As based on oringal code by C. Baldassano (https://github.com/cbaldassano/Parcellating-connectivity/blob/release/python/LearnSynth.py)
 """
+
+SYNTH_TYPES = ['square', 'ell', 'stripes', 'face']
 
 
 class SampleSynthetic(object):
@@ -30,6 +34,8 @@ class SampleSynthetic(object):
     """
 
     def __init__(self, kind, d, mu0, kappa0, nu0, sigma0):
+
+        assert kind in SYNTH_TYPES
 
         self.kind = kind
         self.d = d
@@ -230,3 +236,51 @@ def invchi2(nu, tau2, size):
     """
 
     return invgamma(nu/2, (nu*tau2/2)).rvs(size=size)
+
+
+def plot_synthetic(synth_object, crp_model, cmap='viridis', figsize=(12, 8)):
+
+    """
+    Method to generate reproducible plots of synthetic model performance.
+
+    Parameters:
+    - - - - -
+    synth_object: SampleSynthetic
+        object used to generate synthetic data
+    crp_model: ddCRP
+        ddCRP model used to fit the clusters to the data
+    """
+
+    gt = synth_object.z_.reshape(18, 18)
+    mapz = crp_model.map_z_.reshape(18, 18)
+    init = crp_model.init_z.reshape(18, 18)
+
+    fig, [[ax1, ax2, ax3], [ax4, ax5, ax6]] = plt.subplots(
+        2, 3, figsize=figsize)
+
+    ax1.imshow(gt, cmap=cmap)
+    ax1.set_title('Ground Truth Map', fontsize=14)
+    ax2.imshow(mapz, cmap=cmap)
+    ax2.set_title('Max-Posteriori Map', fontsize=14)
+    ax3.imshow(init, cmap=cmap)
+    ax3.set_title('Initialization Map', fontsize=14)
+
+    ax4.plot(crp_model.stats_['K'])
+    ax4.set_title('Cluster Count', fontsize=14)
+    ax4.set_xlabel('MCMC Iteration', fontsize=14)
+    ax4.set_ylabel('Clusters', fontsize=14)
+
+    ax5.plot(crp_model.stats_['lp'])
+    ax5.set_title('Log-Probability', fontsize=14)
+    ax5.set_xlabel('MCMC Iteration', fontsize=14)
+    ax5.set_ylabel('lp', fontsize=14)
+
+    ax6.plot(crp_model.stats_['max_lp'])
+    ax6.set_title('Max Log-Probability', fontsize=14)
+    ax6.set_xlabel('MCMC Iteration', fontsize=14)
+    ax6.set_ylabel('max-lp', fontsize=14)
+
+    plt.tight_layout()
+    plt.close()
+
+    return fig

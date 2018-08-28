@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import linalg
 from scipy.special import gammaln, multigammaln
-from PriorBase import Prior
+from ddCRP.PriorBase import Prior
 
 
 class NIW(Prior):
@@ -81,7 +81,7 @@ class NIW(Prior):
 
         return [kappaN, nuN, lambdaN]
 
-    def log_likelihood(self, posteriors, suff_stats):
+    def marginal_evidence(self, posteriors, suff_stats):
 
         """
         Compute the log-likelihood of the data.
@@ -188,7 +188,7 @@ class NIX2(Prior):
 
         return [kappaN, nuN, sigmaN]
 
-    def log_likelihood(self, posteriors, suff_stats):
+    def marginal_evidence(self, posteriors, suff_stats):
 
         """
         Compute the log-likelihood of the data.
