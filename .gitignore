@@ -75,6 +75,6 @@ target/
 #pycharm
 .idea/*
 
-
 #Ipython Notebook
 .ipynb_checkpoints
+.notebooks/*.ipynb

@@ -292,15 +292,13 @@ class ddCRP(object):
         model = self.model
 
         idx1 = parcel_split[split_l1]
-        idx2 = parcel_split[split_l2]
-
         suff1 = model.sufficient_statistics(features[idx1, :])
-        suff2 = model.sufficient_statistics(features[idx2, :])
-
         phyp1 = model.posterior_parameters(suff1)
-        phyp2 = model.posterior_parameters(suff2)
-
         lp_1 = model.marginal_evidence(phyp1, suff1)
+
+        idx2 = parcel_split[split_l2]
+        suff2 = model.sufficient_statistics(features[idx2, :])
+        phyp2 = model.posterior_parameters(suff2)
         lp_2 = model.marginal_evidence(phyp2, suff2)
 
         split_ll = lp_1 + lp_2
