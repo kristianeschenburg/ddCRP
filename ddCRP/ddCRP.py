@@ -222,6 +222,8 @@ class ddCRP(object):
                 marginal log-likelihood of a whole parcelation
         """
 
+        print('\nFull')
+
         model = self.model
 
         feats = [features[idx, :] for idx in parcels.values()]

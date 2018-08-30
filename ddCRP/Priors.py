@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import linalg
 from scipy.special import gammaln, multigammaln
 from ddCRP.PriorBase import Prior
 
@@ -18,6 +17,9 @@ class NIW(Prior):
     """
 
     def __init__(self, mu0, kappa0, nu0, lambda0):
+
+        d, _ = lambda0.shape[0]
+        assert nu0 > (d-1), "Degrees of freedom must be greater than the dimension-1."
 
         self.mu0 = mu0
         self.kappa0 = kappa0
@@ -103,8 +105,8 @@ class NIW(Prior):
 
         # terms with square root in marginal likelihood
         inner = (1/2) * (
-            self.nu0*np.log(linalg.det(self.lambda0)) -
-            nu*np.log(linalg.det(L)) +
+            self.nu0*np.log(np.abs(np.linalg.det(self.lambda0))) -
+            nu*np.log(np.abs(np.linalg.det(L))) +
             p * (
                 np.log(self.kappa0) -
                 np.log(kappa) -

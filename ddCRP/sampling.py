@@ -17,6 +17,7 @@ class Gibbs(object):
 
     def sample(self, lp):
 
+
         max_lp = lp.max()
         normLogP = lp - (max_lp + np.log(np.exp(lp-max_lp).sum()))
         p = np.exp(normLogP)
