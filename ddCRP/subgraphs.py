@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import csgraph, csc_matrix
+from scipy import sparse
 import random
 
 """
@@ -7,7 +7,7 @@ As based on original code by C. Baldassano (https://github.com/cbaldassano/Parce
 """
 
 
-def ConnectedComponents(G):
+def connected_components(G):
     """
     Compute connected components of graph.
 
@@ -26,7 +26,7 @@ Returns:
         mapping between cluster ID and sample indices
     """
 
-    [K, components] = csgraph.connected_components(G, directed=False,
+    [K, components] = sparse.csgraph.connected_components(G, directed=False,
                                                    connection='weak')
 
     sorted_i = np.argsort(components)
@@ -38,69 +38,131 @@ Returns:
     return [K, components, parcels]
 
 
+def remap_components(G, label):
+    """
+    Check to make sure that the label map has the same number of labels
+    as there are connected components.  If not, remap. the connected components.
+
+    Parameters:
+    - - - -- -
+    G: sparse adjacency matrix
+        adjacency structure after filtering cross-label edges
+
+    Returns:
+    - - - -
+    label: array
+        original or remapped label array
+    """
+
+    L = len(np.unique(label))
+    [K, r] = sparse.csgraph.connected_components(G)
+
+    if K != L:
+        label = r
+
+    return label
+
+
+def sparse_linkage(adj_list, nvox, init_c=None):
+        """
+        Compute source-to-target linkages and sparse neighborhood matrix.
+        Parameters:
+        - - - - -
+        adj_list: dictionary
+            adjacency list of samples
+        nvox: int
+            number of samples
+        init_c: array
+            initial source-to-taret linkages
+        """
+
+        if not np.any(init_c):
+            c = np.zeros((nvox,))
+            for i in np.arange(nvox):
+                neighbors = adj_list[i] + [i]
+                c[i] = neighbors[np.random.randint(low=0, high=len(neighbors))]
+        else:
+            c = init_c
+
+        c = c.astype(np.int32)
+
+        # initialize sparse linkage matrix
+        G = sparse.csc_matrix(
+            (np.ones((nvox, )), (np.arange(nvox), c)), shape=(nvox, nvox))
+
+        G = G.tolil()
+
+        return [c, G]
+
+
 class ClusterSpanningTrees(object):
     """
     Compute cluster-specific minimum spanning trees.
 
-    Parameters:
-    - - - - -
+    """
+
+    def __init__(self):
+        pass
+
+    def fit(self, adj_list, z):
+        """
+        Compute connected components of graph.
+
+        Parameters:
+        - - - - -
         adj_list : dictionary
                     adjacency list of samples
         z : array
             initial clustering
-    """
-
-    def __init__(self, adj_list, z):
-        self.adj_list = adj_list
-        self.z = z.astype(np.int32)
-
-    def fit(self):
-        """
-        Compute connected components of graph.
 
         Returns:
         - - - -
-            c : array
-                mininium spanning trees of clustering, where index
-                c[i] = parent of node i
+        c : array
+            mininium spanning trees of clustering, where index
+            c[i] = parent of node i
         """
 
-        self._filter_adjacency()
-        c = self._construct_sparse()
+        filtered = self.filter_by_label(adj_list, z)
+        c = self.construct_sparse(filtered, z)
 
         return c
 
-    def _filter_adjacency(self):
+    @staticmethod
+    def filter_by_label(adjacency, label):
         """
         Filter an adjacency list so that there are no cross-cluster edges.
 
         Parameters:
         - - - - -
-            adj_list : dictionary
-                        input adjacency list
-            z : array
-                input clustering
+        adj_list : dictionary
+            input adjacency list
+        z : array
+            input clustering
         """
 
-        adj_list = self.adj_list.copy()
+        adj_list = adjacency.copy()
 
         for k, v in adj_list.items():
-            adj_list[k] = list(np.asarray(v)[self.z[v] == self.z[k]])
+            adj_list[k] = list(np.asarray(v)[label[v] == label[k]])
             adj_list[k] = list(np.random.permutation(adj_list[k]))
 
-        self.adj_list = adj_list
+        return adj_list
 
-    def _construct_sparse(self):
+    @staticmethod
+    def construct_sparse(adjacency, label):
         """
         Construct sparse matrix from adjacency list.
 
         Returns:
         - - - -
-            c : array
-                minimum spanning trees of clustering
+        c : int array
+            minimum spanning trees of clustering
         """
-        nvox = len(self.adj_list.keys())
-        neighbor_count = [len(self.adj_list[k]) for k in self.adj_list.keys()]
+
+        # Construct sparse adjacency matrix
+        nvox = len(adjacency.keys())
+        neighbor_count = [len(adjacency[k])
+                          for k in adjacency.keys()]
         node_list = np.zeros(sum(neighbor_count))
         next_edge = 0
 
@@ -113,18 +175,25 @@ class ClusterSpanningTrees(object):
 
         node_list = list(map(int, node_list))
 
-        G = csc_matrix((
-            np.ones(len(node_list)),
-            (node_list, np.hstack(self.adj_list.values()))),
+        sources = np.concatenate([node_list, np.hstack(adjacency.values())])
+        targets = np.concatenate([np.hstack(adjacency.values()), node_list])
+
+        G = sparse.csc_matrix((
+            np.ones(len(sources)),
+            (sources, targets)),
             shape=(nvox, nvox))
+        
+        # Check to make sure # labels = # components
+        # otherwise, remap labels
+        label = remap_components(G, label)
 
         # Construct spanning tree in each cluster
-        minT = csgraph.minimum_spanning_tree(G)
-        c = np.zeros(len(self.adj_list))
-        for clust in np.unique(self.z):
-            clust_vox = np.flatnonzero(self.z == clust)
-            rand_root = clust_vox[random.randint(1, len(clust_vox)-1)]
-            _, parents = csgraph.breadth_first_order(minT, rand_root,
+        minT = sparse.csgraph.minimum_spanning_tree(G)
+        c = np.zeros(len(adjacency))
+        for clust in np.unique(label):
+            clust_vox = np.flatnonzero(label == clust)
+            rand_root = np.random.choice(clust_vox)
+            _, parents = sparse.csgraph.breadth_first_order(minT, rand_root,
                                                      directed=False)
             c[clust_vox] = parents[clust_vox]
 
@@ -133,3 +202,4 @@ class ClusterSpanningTrees(object):
         c[roots] = roots
 
         return c
+

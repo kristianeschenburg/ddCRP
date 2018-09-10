@@ -60,7 +60,8 @@ class ddCRP(object):
         self.n_clusters = n_clusters
         self.verbose = verbose
 
-    def fit(self, features, adj_list, init_c=None, gt_z=None, edge_prior=None):
+    def fit(self, features, adj_list, init_z=None, init_c=None, gt_z=None, 
+        edge_prior=None):
 
         """
         Main function to fit the distance-dependent Chinese Restaurant Process.
@@ -70,8 +71,10 @@ class ddCRP(object):
                 data array of features for each sample
         adj_list : dictionary
                 adjacency list of samples
+        init_z : array
+            initialized cortical map
         init_c : array
-                initialized cortical map, default = []
+                initialized parent linkage matrix
         gt_z : array
                 ground truth map for computing normalized mutual information
         edge_prior : dictionary
@@ -92,17 +95,18 @@ class ddCRP(object):
             'c': np.empty((0, nvox)), 'NMI': [],
             'deltaC': [], 'boundC': []}
 
-        # initialize parent vector, if not provided
-        # if ward parameter is set to True, will
-        if self.ward:
-
+        # If initial clustering provided, generate spanning trees from it
+        # Otherwise, if desired, generate spanning trees from Ward Clustering
+        if np.any(init_z):
+            init_c = subgraphs.ClusterSpanningTrees().fit(adj_list, init_z)
+        elif self.ward:
             init_c = ward_clustering.Ward(features, adj_list, self.n_clusters)
 
-        # compute initial linkage matrix
-        [c, G] = self._sparse_linkage(adj_list, nvox, init_c)
+        # compute initial MST component array matrix
+        [c, G] = subgraphs.sparse_linkage(adj_list, nvox, init_c)
 
         # compute initial parcel count and parcel assignments
-        [K, z, parcels] = subgraphs.ConnectedComponents(G)
+        [K, z, parcels] = subgraphs.connected_components(G)
         self.init_z = z
 
         # compute log-likelihood of initial cortical map
@@ -147,7 +151,7 @@ class ddCRP(object):
                     parcels_rem = parcels
                 else:
                     # otherwise compute new connected components
-                    K_rem, z_rem, parcels_rem = subgraphs.ConnectedComponents(
+                    K_rem, z_rem, parcels_rem = subgraphs.connected_components(
                         G)
 
                     # if number of components changed
@@ -188,7 +192,7 @@ class ddCRP(object):
                 # add new edge to parent graph
                 G[i, c[i]] = 1
                 # compute new connected components
-                [K_new, z_new, parcels_new] = subgraphs.ConnectedComponents(G)
+                [K_new, z_new, parcels_new] = subgraphs.connected_components(G)
 
                 deltaC = statistics.delta_C(parcels, parcels_new)
                 boundC = statistics.boundaries(z_new, adj_list)
@@ -307,34 +311,3 @@ class ddCRP(object):
 
         return split_ll
 
-    def _sparse_linkage(self, adj_list, nvox, init_c=None):
-
-        """
-        Compute source-to-target linkages and sparse neighborhood matrix.
-        Parameters:
-        - - - - -
-        adj_list: dictionary
-            adjacency list of samples
-        nvox: int
-            number of samples
-        init_c: array
-            initial source-to-taret linkages
-        """
-
-        if not np.any(init_c):
-            c = np.zeros((nvox,))
-            for i in np.arange(nvox):
-                neighbors = adj_list[i] + [i]
-                c[i] = neighbors[np.random.randint(low=0, high=len(neighbors))]
-        else:
-            c = init_c
-
-        c = c.astype(np.int32)
-
-        # initialize sparse linkage matrix
-        G = sparse.csc_matrix(
-            (np.ones((nvox, )), (np.arange(nvox), c)), shape=(nvox, nvox))
-
-        G = G.tolil()
-
-        return [c, G]

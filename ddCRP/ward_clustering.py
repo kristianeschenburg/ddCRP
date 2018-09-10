@@ -11,7 +11,6 @@ As based on original code by C. Baldassano (https://github.com/cbaldassano/Parce
 
 
 def Ward(D, adj_list, n_clusters):
-
     """
     Method to apply Ward Clustering to feature data.
 
@@ -33,7 +32,7 @@ def Ward(D, adj_list, n_clusters):
 
     linkage = ClusterTree(similarity, adj_list)
     z = Cluster(linkage, n=n_clusters)
-    c = subgraphs.ClusterSpanningTrees(adj_list, z).fit()
+    c = subgraphs.ClusterSpanningTrees().fit(adj_list, z)
 
     return c
 
@@ -42,12 +41,17 @@ def Cluster(Z, n):
     """
     Wrapper function to compute parcellation from linkage matrix.
 
-    Parameters:
-    - - - - -
+    Parameters
+    ----------
     Z : array
         linkage matrix
     n : int
         number of components to generate
+    
+    Returns
+    -------
+    z: int array
+        clustering of samples
     """
 
     z = cluster.hierarchy.fcluster(Z, t=n, criterion='maxclust')
@@ -65,12 +69,12 @@ def ClusterTree(D, adj_list):
     D : array
         similarity matrix
     adj_list : dictionary
-                adjacency list
+        adjacency list
 
     Returns:
     - - - -
-        Z : array
-            linkage matrix
+    Z : array
+        linkage matrix
     """
 
     # Compute squared euclidean distance Y between rows
@@ -171,7 +175,7 @@ def correlation(features):
     Parameters:
     - - - - -
     features : array
-                sample features
+        sample features
 
     Returns:
     - - - -

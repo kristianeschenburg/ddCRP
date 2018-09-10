@@ -18,7 +18,7 @@ class NIW(Prior):
 
     def __init__(self, mu0, kappa0, nu0, lambda0):
 
-        d, _ = lambda0.shape[0]
+        [d, _] = lambda0.shape
         assert nu0 > (d-1), "Degrees of freedom must be greater than the dimension-1."
 
         self.mu0 = mu0
