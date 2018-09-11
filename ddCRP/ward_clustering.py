@@ -24,7 +24,7 @@ def Ward(D, adj_list, n_clusters):
     Returns:
     - - - -
     c : array
-        cluster assignment of each sample
+        parent links for ward clusters
     """
 
     D_norm = statistics.Normalize(D)
@@ -78,10 +78,9 @@ def ClusterTree(D, adj_list):
     """
 
     # Compute squared euclidean distance Y between rows
-    Qx = np.tile(np.linalg.norm(D, axis=1)**2, (D.shape[0], 1))
-    Y = Qx + Qx.transpose()-2*np.dot(D, D.transpose())
-    Y = spatial.distance.squareform(Y, checks=False)
-    Y[Y < 0] = 0  # Correct for numerical errors in very similar rows
+    Y = spatial.distance.pdist(D, metric='sqeuclidean')
+    Y = spatial.distance.squareform(Y)
+    Y[Y<0] = 0
 
     # Construct adjacency matrix
     N = len(adj_list)

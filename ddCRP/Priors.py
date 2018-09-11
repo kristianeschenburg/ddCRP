@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.linalg import det
 from scipy.special import gammaln, multigammaln
 from ddCRP.PriorBase import Prior
 
@@ -100,19 +101,16 @@ class NIW(Prior):
         _, p = L.shape
         n = suff_stats[0]
 
-        # ratio of gamma functions
-        gam = multigammaln(nu/2, p) - multigammaln(self.nu0/2, p)
+        numer = multigammaln(nu/2, p) +
+            (self.nu0/2)*np.log(np.abs(det(self.lambda0))) +
+            (p/2)*np.log(self.kappa0) 
 
-        # terms with square root in marginal likelihood
-        inner = (1/2) * (
-            self.nu0*np.log(np.abs(np.linalg.det(self.lambda0))) -
-            nu*np.log(np.abs(np.linalg.det(L))) +
-            p * (
-                np.log(self.kappa0) -
-                np.log(kappa) -
-                n*np.log(np.pi)))
+        denom = multigammaln(self.nu0/2) +
+            (nu/2)*np.log(np.abs(det(L))) +
+            (p/2)*np.log(kappa) +
+            (n*p/2)*np.log(np.pi)
 
-        lp = gam + inner
+        lp = numer - denom
 
         return lp
 
@@ -221,3 +219,23 @@ class NIX2(Prior):
         lp = p*(gam + inner) + outer
 
         return lp
+
+
+def log_mvg(nu, d):
+
+    """
+    Compute the log of the multivariate gamma function.
+    
+    Parameters:
+    - - - - - 
+    nu : float
+        degrees of freedom
+    d: int
+        dimensionality
+    """
+
+    outer = (d)*(d-1)/4*np.log(np.pi)
+    inner = np.sum(list(map(gammaln, (nu + 1 - np.arange(1,d+1))/2)))
+
+    mvg = outer + inner
+    return mvg

@@ -23,7 +23,6 @@ class Gibbs(object):
         p = np.exp(normLogP)
         p[np.isnan(p)] = 0
         p[np.isinf(p)] = 0
-
         cumP = np.cumsum(p)
         i = np.where(cumP > random.random())[0][0]
 
