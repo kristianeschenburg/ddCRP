@@ -226,17 +226,7 @@ class ddCRP(object):
                 marginal log-likelihood of a whole parcelation
         """
 
-        print('\nFull')
-
-        model = self.model
-
-        feats = [features[idx, :] for idx in parcels.values()]
-
-        suff_stats = map(model.sufficient_statistics, feats)
-        posteriors = map(model.posterior_parameters, suff_stats)
-        cluster_prob = map(model.marginal_evidence, posteriors, suff_stats)
-
-        lp = np.sum(list(cluster_prob))
+        lp = self.model.full_evidence(parcels, features)
 
         return lp
 
