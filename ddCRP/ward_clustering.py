@@ -77,10 +77,15 @@ def ClusterTree(D, adj_list):
         linkage matrix
     """
 
+    X = D
+
     # Compute squared euclidean distance Y between rows
-    Y = spatial.distance.pdist(D, metric='sqeuclidean')
-    Y = spatial.distance.squareform(Y)
-    Y[Y<0] = 0
+    Qx = np.tile(np.linalg.norm(X, axis=1)**2,(X.shape[0],1))
+    Y = Qx + Qx.transpose()-2*np.dot(X, X.transpose())
+    Y = spatial.distance.squareform(Y,checks=False)
+    Y[Y<0] = 0  # Correct for numerical errors in very similar rows
+
+    print('Similarity shape: {:}'.format(Y.shape))
 
     # Construct adjacency matrix
     N = len(adj_list)
@@ -88,6 +93,7 @@ def ClusterTree(D, adj_list):
     for i in range(N):
         A[i, adj_list[i]] = True
     connected = spatial.distance.squareform(A).astype(bool)
+    print('Connected shape: {:}'.format(connected.shape))
 
     # Initialize all data structures
     valid_clusts = np.ones(N, dtype=bool)   # which clusters still remain

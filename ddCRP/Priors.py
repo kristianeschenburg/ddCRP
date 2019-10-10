@@ -101,15 +101,8 @@ class NIW(Prior):
         _, p = L.shape
         n = suff_stats[0]
 
-        numer = multigammaln(nu/2, p) +
-            (self.nu0/2)*np.log(np.abs(det(self.lambda0))) +
-            (p/2)*np.log(self.kappa0) 
-
-        denom = multigammaln(self.nu0/2) +
-            (nu/2)*np.log(np.abs(det(L))) +
-            (p/2)*np.log(kappa) +
-            (n*p/2)*np.log(np.pi)
-
+        numer = multigammaln(nu/2, p) + (self.nu0/2)*np.log(np.abs(det(self.lambda0))) + (p/2)*np.log(self.kappa0) 
+        denom = multigammaln(self.nu0/2) + (nu/2)*np.log(np.abs(det(L))) + (p/2)*np.log(kappa) + (n*p/2)*np.log(np.pi)
         lp = numer - denom
 
         return lp
