@@ -101,11 +101,51 @@ class NIW(Prior):
         _, p = L.shape
         n = suff_stats[0]
 
+<<<<<<< HEAD
         numer = multigammaln(nu/2, p) + (self.nu0/2)*np.log(np.abs(det(self.lambda0))) + (p/2)*np.log(self.kappa0) 
         denom = multigammaln(self.nu0/2) + (nu/2)*np.log(np.abs(det(L))) + (p/2)*np.log(kappa) + (n*p/2)*np.log(np.pi)
+=======
+        numer = multigammaln(nu/2, p) + \
+            (self.nu0/2)*np.log(np.abs(det(self.lambda0))) + \
+            (p/2)*np.log(self.kappa0) 
+
+        denom = multigammaln(self.nu0/2, p) + \
+            (nu/2)*np.log(np.abs(det(L))) + \
+            (p/2)*np.log(kappa) + \
+            (n*p/2)*np.log(np.pi)
+
+>>>>>>> 88b536ce3142c37f2229cf569af44ee0c6f67655
         lp = numer - denom
 
         return lp
+
+    def full_evidence(self, parcels, features):
+
+        """
+        Compute the full marginal evidence of a given clustering.
+
+        Parameters:
+        - - - - - 
+        parcels: dictionary
+            mapping of cluster labels to sample indices
+        features: float, array
+            data feature vectors
+        
+        Returns:
+        - - - -
+        lp: float
+            full evidence of model
+        """
+
+        feats = [features[idx, :] for idx in parcels.values()]
+        suff_stats = map(self.sufficient_statistics, feats)
+        posteriors = map(self.posterior_parameters, suff_stats)
+        cluster_prob = map(self.marginal_evidence, posteriors, suff_stats)
+
+        lp = np.sum(list(cluster_prob))
+
+        return lp
+
 
 
 class NIX2(Prior):
@@ -213,22 +253,28 @@ class NIX2(Prior):
 
         return lp
 
+    def full_evidence(self, parcels, features):
+        """
+        Compute the full marginal evidence of a given clustering.
 
-def log_mvg(nu, d):
+        Parameters:
+        - - - - - 
+        parcels: dictionary
+            mapping of cluster labels to sample indices
+        features: float, array
+            data feature vectors
+        
+        Returns:
+        - - - -
+        lp: float
+            full evidence of model
+        """
 
-    """
-    Compute the log of the multivariate gamma function.
-    
-    Parameters:
-    - - - - - 
-    nu : float
-        degrees of freedom
-    d: int
-        dimensionality
-    """
+        feats = [features[idx, :] for idx in parcels.values()]
+        suff_stats = map(self.sufficient_statistics, feats)
+        posteriors = map(self.posterior_parameters, suff_stats)
+        cluster_prob = map(self.marginal_evidence, posteriors, suff_stats)
 
-    outer = (d)*(d-1)/4*np.log(np.pi)
-    inner = np.sum(list(map(gammaln, (nu + 1 - np.arange(1,d+1))/2)))
+        lp = np.sum(list(cluster_prob))
 
-    mvg = outer + inner
-    return mvg
+        return lp

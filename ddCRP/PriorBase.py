@@ -35,3 +35,12 @@ class Prior(ABC):
         given posterior parameters of the model.
         """
         pass
+
+    @abstractmethod
+    def full_evidence(self):
+
+        """
+        Compute the full marginal evidence of a given clustering.
+        """
+        pass
+
