@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from surface_utilities import adjacency
+from ddCRP import mesh_utilities
 
 """
 As based on original code by C. Baldassano (https://github.com/cbaldassano/Parcellating-connectivity/blob/release/python/StatsUtil.py)
@@ -70,15 +70,19 @@ def boundaries(label, adj_list, normed=True):
         cortical map
     adjacency : dictionary
         adjacency list
+    normed: bool
+       return number of boundary vertices, normalized by total number of 
+       vertices (i.e. return a FLOAT rather than an INT)
     Returns:
     - - - -
     boundC : int
         number of vertics that exist at parcel boundaries
     """
 
-    bmap = adjacency.BoundaryMap(label, adj_list)
-    bmap.find_boundaries()
-    boundC = bmap.boundaries.sum()
+    idx_map = {k: list(np.where(label == k)[0]) for k in set(label)}
+    bmap = mesh_utilities.find_boundaries(idx_map, adj_list)
+
+    boundC = np.sum([len(k) for k in bmap.values()])
 
     if normed:
         boundC = boundC / len(label)

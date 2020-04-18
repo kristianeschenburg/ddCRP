@@ -21,7 +21,6 @@ class ddCRP(object):
         type of prior model to use for feature data
     mcmc_passes: int
         number of MCMC passes to apply to data
-    stats_interval: int
         number of passes to run before recording statistics
     verbose: bool
         print statistics every stats_interval
