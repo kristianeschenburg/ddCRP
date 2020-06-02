@@ -1,10 +1,6 @@
 import numpy as np
 import time
-<<<<<<< HEAD
-from ddCRP import mesh_utilities
-=======
 from ddCRP.adjacency import BoundaryMap
->>>>>>> 2aa12a279188257b9c22265a04094e5d9af7cb0e
 
 """
 As based on original code by C. Baldassano (https://github.com/cbaldassano/Parcellating-connectivity/blob/release/python/StatsUtil.py)
@@ -83,16 +79,9 @@ def boundaries(label, adj_list, normed=True):
         number of vertics that exist at parcel boundaries
     """
 
-<<<<<<< HEAD
-    idx_map = {k: list(np.where(label == k)[0]) for k in set(label)}
-    bmap = mesh_utilities.find_boundaries(idx_map, adj_list)
-
-    boundC = np.sum([len(k) for k in bmap.values()])
-=======
     bmap = BoundaryMap(label, adj_list)
     bmap.find_boundaries()
     boundC = bmap.boundaries.sum()
->>>>>>> 2aa12a279188257b9c22265a04094e5d9af7cb0e
 
     if normed:
         boundC = boundC / len(label)
